@@ -15,7 +15,7 @@ import se.onlyfin.onlyfinbackend.repository.StockRepository;
 
 import java.util.Optional;
 
-@CrossOrigin(origins = "localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "https://onlybackend-production.up.railway.app", allowCredentials = "true")
 @RestController
 @RequestMapping("/studio")
 public class StudioController {

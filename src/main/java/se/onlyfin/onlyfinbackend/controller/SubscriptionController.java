@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * This class is responsible for handling requests related to subscriptions.
  */
-@CrossOrigin(origins = "localhost:3000", allowCredentials = "true")
+@CrossOrigin(origins = "https://onlybackend-production.up.railway.app", allowCredentials = "true")
 @RestController
 public class SubscriptionController {
     private final UserRepository userRepository;
