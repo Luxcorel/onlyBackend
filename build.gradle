@@ -29,7 +29,7 @@ dependencies {
 
 bootJar {
     manifest {
-        attributes 'Start-Class': 'se.onlyfin.onlyfinbackend.OnlyfinBackend'
+        attributes 'Main-Class': 'se.onlyfin.onlyfinbackend.OnlyfinBackend'
     }
 }
 
