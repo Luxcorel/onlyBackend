@@ -35,7 +35,8 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
+        http.cors().and().
+                csrf().disable()
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers(
                                 "/user",
@@ -104,6 +105,16 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**").allowedOrigins("https://onlyfrontend-production.up.railway.app").allowCredentials(true);
+            }
+        };
     }
 
 }
