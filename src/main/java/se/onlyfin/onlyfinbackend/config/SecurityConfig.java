@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import se.onlyfin.onlyfinbackend.LoginSuccessHandlerImpl;
 import se.onlyfin.onlyfinbackend.service.OnlyfinUserDetailsService;
 
 /**
@@ -81,7 +82,7 @@ public class SecurityConfig {
                         //uncomment the row below to enable user debug:
                         .requestMatchers("/user-debug").permitAll()
                 )
-                .formLogin().loginProcessingUrl("/plz");
+                .formLogin().loginProcessingUrl("/plz").successHandler(new LoginSuccessHandlerImpl());
         return http.build();
     }
 
