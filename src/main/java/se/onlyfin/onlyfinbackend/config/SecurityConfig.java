@@ -81,7 +81,7 @@ public class SecurityConfig {
                         //uncomment the row below to enable user debug:
                         .requestMatchers("/user-debug").permitAll()
                 )
-                .formLogin().loginProcessingUrl("/plz").successForwardUrl("https://onlyfrontend-production.up.railway.app/");
+                .formLogin().loginProcessingUrl("/plz");
         return http.build();
     }
 
