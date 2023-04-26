@@ -29,7 +29,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/feed")
-@CrossOrigin(origins = "https://onlybackend-production.up.railway.app", allowCredentials = "true")
+@CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 public class FeedController {
     private final DashboardController dashboardController;
     private final UserRepository userRepository;

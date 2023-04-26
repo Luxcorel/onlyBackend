@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @RequestMapping("/stonks")
 @RestController
-@CrossOrigin(origins = "https://onlybackend-production.up.railway.app", allowCredentials = "true")
+@CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 public class StockReferenceController {
     private final StockRefRepository stockRefRepository;
 

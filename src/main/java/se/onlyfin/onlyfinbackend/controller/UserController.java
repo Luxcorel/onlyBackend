@@ -18,7 +18,7 @@ import java.util.Optional;
 /**
  * This class is responsible for handling requests related to user management.
  */
-@CrossOrigin(origins = "https://onlybackend-production.up.railway.app", allowCredentials = "true")
+@CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 @Controller
 public class UserController {
     private final UserRepository userRepository;

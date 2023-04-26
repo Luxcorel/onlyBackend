@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/dashboard")
-@CrossOrigin(origins = "https://onlybackend-production.up.railway.app", allowCredentials = "true")
+@CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 public class DashboardController {
 
     private DashboardRepository dashboardRepository;

@@ -20,7 +20,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/algo")
-@CrossOrigin(origins = "https://onlybackend-production.up.railway.app", allowCredentials = "true")
+@CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 public class UserSuggestionAlgorith {
     private final UserRepository userRepository;
     private final DashboardController dashboardController;
