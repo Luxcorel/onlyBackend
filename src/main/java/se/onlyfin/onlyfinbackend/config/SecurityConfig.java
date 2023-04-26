@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import se.onlyfin.onlyfinbackend.service.OnlyfinUserDetailsService;
@@ -82,7 +81,7 @@ public class SecurityConfig {
                         //uncomment the row below to enable user debug:
                         .requestMatchers("/user-debug").permitAll()
                 )
-                .formLogin().loginProcessingUrl("/plz").successHandler(new SimpleUrlAuthenticationSuccessHandler("https://onlyfrontend-production.up.railway.app/Dashboard"));
+                .formLogin().loginProcessingUrl("/plz");
         return http.build();
     }
 
