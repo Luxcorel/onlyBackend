@@ -20,12 +20,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'org.postgresql:postgresql'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	testImplementation 'org.springframework.security:spring-security-test'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
-	compileOnly('org.springframework.boot:spring-boot-gradle-plugin:')
 }
 
 tasks.named('test') {
