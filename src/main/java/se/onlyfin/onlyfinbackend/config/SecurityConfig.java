@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import se.onlyfin.onlyfinbackend.LoginSuccessHandlerImpl;
@@ -75,13 +76,14 @@ public class SecurityConfig {
                                 "/",
                                 "/register",
                                 "/plz",
+                                "/login",
                                 "/assets/**"
                         )
                         .permitAll()
                         //uncomment the row below to enable user debug:
                         .requestMatchers("/user-debug").permitAll()
                 )
-                .formLogin().loginProcessingUrl("/plz").successHandler(new LoginSuccessHandlerImpl());
+                .formLogin().loginProcessingUrl("/plz").successHandler(new LoginSuccessHandlerImpl()).failureHandler(new SimpleUrlAuthenticationFailureHandler("#"));
         return http.build();
     }
 
