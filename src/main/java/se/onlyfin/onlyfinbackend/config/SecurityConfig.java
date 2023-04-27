@@ -84,7 +84,8 @@ public class SecurityConfig {
                 .formLogin()
                 .loginProcessingUrl("/plz")
                 .successHandler(new LoginSuccessHandlerDoNothingImpl())
-                .failureHandler(new LoginFailureHandlerDoNothingImpl());
+                .failureHandler(new LoginFailureHandlerDoNothingImpl())
+                .loginPage("https://onlyfrontend-production.up.railway.app/Login");
         return http.build();
     }
 
