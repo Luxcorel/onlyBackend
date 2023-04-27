@@ -1,4 +1,4 @@
-package se.onlyfin.onlyfinbackend;
+package se.onlyfin.onlyfinbackend.config;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,7 +8,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 
 import java.io.IOException;
 
-public class LoginSuccessHandlerImpl implements AuthenticationSuccessHandler {
+public class LoginSuccessHandlerDoNothingImpl implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
