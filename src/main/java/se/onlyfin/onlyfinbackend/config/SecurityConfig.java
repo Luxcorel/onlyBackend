@@ -75,7 +75,6 @@ public class SecurityConfig {
                                 "/",
                                 "/register",
                                 "/plz",
-                                "/login",
                                 "/assets/**"
                         )
                         .permitAll()
