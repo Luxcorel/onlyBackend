@@ -79,7 +79,7 @@ public class SecurityConfig {
                         )
                         .permitAll()
                         //uncomment the row below to enable user debug:
-                        .requestMatchers("/user-debug").permitAll()
+                        //.requestMatchers("/user-debug").permitAll()
                 )
                 .formLogin()
                 .loginProcessingUrl("/plz")
