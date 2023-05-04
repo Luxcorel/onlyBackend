@@ -11,15 +11,16 @@ import java.util.List;
 @Table(name = "stock")
 public class Stock {
 
-    public Stock(){
+    public Stock() {
 
     }
-    public Stock(int id){
+
+    public Stock(int id) {
         this.id = id;
     }
 
     @Id
-    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -31,7 +32,7 @@ public class Stock {
     @JoinColumn(name = "dashboard_id")
     private Dashboard dashboard_id;
 
-    @OneToMany (mappedBy = "stock_id", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "stock_id", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Category> categories = new ArrayList<>();
 
     public int getDashboard_id() {

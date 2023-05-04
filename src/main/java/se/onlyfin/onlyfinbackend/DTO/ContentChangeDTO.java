@@ -18,7 +18,11 @@ public class ContentChangeDTO {
         this.id = id;
     }
 
-    public JsonNode getContent() { return content; }
+    public JsonNode getContent() {
+        return content;
+    }
 
-    public void setName(JsonNode content) { this.content = content; }
+    public void setName(JsonNode content) {
+        this.content = content;
+    }
 }

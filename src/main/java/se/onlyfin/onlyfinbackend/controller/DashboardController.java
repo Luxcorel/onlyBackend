@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.model.dashboard_entity.*;
 import se.onlyfin.onlyfinbackend.repository.DashboardRepository;
+import se.onlyfin.onlyfinbackend.repository.StockRefRepository;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,10 +19,12 @@ import java.util.Optional;
 @CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 public class DashboardController {
 
-    private DashboardRepository dashboardRepository;
+    private final DashboardRepository dashboardRepository;
+    private final StockRefRepository stockRefRepository;
 
-    public DashboardController(DashboardRepository dashboardRepository) {
+    public DashboardController(DashboardRepository dashboardRepository, StockRefRepository stockRefRepository) {
         this.dashboardRepository = dashboardRepository;
+        this.stockRefRepository = stockRefRepository;
     }
 
     @GetMapping("/{id}")
@@ -35,9 +38,26 @@ public class DashboardController {
         return ResponseEntity.ok(dashboard);
     }
 
-    public Instant fetchAnalystsLastPostTime(@NonNull User targetAnalyst) {
-        Dashboard targetAnalystsDashboard = dashboardRepository.findById(targetAnalyst.getId()).orElseThrow();
+    @GetMapping("/getStockRef")
+    public ResponseEntity<?> getStockRef() {
+        List<StockRef> stockRefs = stockRefRepository.findAll();
 
+        return ResponseEntity.ok(stockRefs);
+    }
+
+    /**
+     * This method goes through all the analyst's posts and returns whichever Instant is the latest date
+     *
+     * @param targetAnalyst the analysts to target
+     * @return Instant object containing time&date information about the last post date
+     */
+    public Instant fetchAnalystsLastPostTime(@NonNull User targetAnalyst) {
+        Optional<Dashboard> optionalTargetAnalystsDashboard = dashboardRepository.findById(targetAnalyst.getId());
+        if (optionalTargetAnalystsDashboard.isEmpty()) {
+            return Instant.MIN;
+        }
+
+        Dashboard targetAnalystsDashboard = optionalTargetAnalystsDashboard.get();
         List<Stock> analystsStocks = targetAnalystsDashboard.getStocks();
         Instant latestInstant = Instant.MIN;
         for (Stock currentStock : analystsStocks) {
@@ -54,9 +74,19 @@ public class DashboardController {
         return latestInstant;
     }
 
+    /**
+     * This method goes through all the analyst's posts and returns whichever Instant is the latest update date
+     *
+     * @param targetAnalyst the analysts to target
+     * @return Instant object containing time&date information about the last post update date
+     */
     public Instant fetchAnalystsLastUpdateTime(@NonNull User targetAnalyst) {
-        Dashboard targetAnalystsDashboard = dashboardRepository.findById(targetAnalyst.getId()).orElseThrow();
+        Optional<Dashboard> optionalTargetAnalystsDashboard = dashboardRepository.findById(targetAnalyst.getId());
+        if (optionalTargetAnalystsDashboard.isEmpty()) {
+            return Instant.MIN;
+        }
 
+        Dashboard targetAnalystsDashboard = optionalTargetAnalystsDashboard.get();
         List<Stock> analystsStocks = targetAnalystsDashboard.getStocks();
         Instant latestInstant = Instant.MIN;
         for (Stock currentStock : analystsStocks) {
@@ -73,10 +103,22 @@ public class DashboardController {
         return latestInstant;
     }
 
+    /**
+     * Returns the dashboard object for a user specified by user id
+     *
+     * @param userId id of user to target
+     * @return dashboard object or null if no dashboard is found
+     */
     public Dashboard fetchDashboard(Integer userId) {
         return dashboardRepository.findById(userId).orElse(null);
     }
 
+    /**
+     * Returns a map which contains what stocks are covered by which analysts
+     *
+     * @param analysts analysts to include
+     * @return map of stocks and who covers them
+     */
     public HashMap<StockRef, ArrayList<User>> fetchCoverageMap(List<User> analysts) {
         HashMap<StockRef, ArrayList<User>> coverageMap = new HashMap<>();
 
@@ -100,7 +142,6 @@ public class DashboardController {
         }
 
         return coverageMap;
-
     }
 
 }

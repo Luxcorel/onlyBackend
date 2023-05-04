@@ -19,6 +19,12 @@ public class StockReferenceController {
         this.stockRefRepository = stockRefRepository;
     }
 
+    /**
+     * Searches for stocks by the target name
+     *
+     * @param search the search query
+     * @return list of stocks matching the search query
+     */
     @GetMapping("/search-stonk-by-name")
     public ResponseEntity<List<StockRef>> fetchStocksUsingName(@RequestParam String search) {
         if (search.isBlank()) {
@@ -33,6 +39,12 @@ public class StockReferenceController {
         return ResponseEntity.ok().body(searchResults);
     }
 
+    /**
+     * Searches for stocks by the target ticker name
+     *
+     * @param search the target stock ticker
+     * @return list of stocks matching the ticker
+     */
     @GetMapping("/search-stonk-by-ticker")
     public ResponseEntity<List<StockRef>> fetchStocksUsingTicker(@RequestParam String search) {
         if (search.isBlank()) {
@@ -47,10 +59,22 @@ public class StockReferenceController {
         return ResponseEntity.ok().body(searchResults);
     }
 
+    /**
+     * Fetches all stock references starting with stock name
+     *
+     * @param stockName the target stock name
+     * @return list of stockRefs matching the target stock name
+     */
     public List<StockRef> fetchStockReferencesUsingName(String stockName) {
         return new ArrayList<>(stockRefRepository.findTop7StockRefsByNameIgnoreCaseStartingWith(stockName));
     }
 
+    /**
+     * Finds one stockRef using its exact name
+     *
+     * @param stockName the target's exact name
+     * @return target stock if found
+     */
     public Optional<StockRef> fetchStockRefByName(String stockName) {
         return stockRefRepository.findStockRefByName(stockName);
     }

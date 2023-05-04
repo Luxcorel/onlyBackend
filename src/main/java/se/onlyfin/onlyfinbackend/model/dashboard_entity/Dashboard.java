@@ -9,21 +9,22 @@ import java.util.List;
 @Table(name = "dashboard")
 public class Dashboard {
 
-    public Dashboard(){
+    public Dashboard() {
 
     }
-    public Dashboard(int id){
+
+    public Dashboard(int id) {
         this.id = id;
     }
 
     @Id
     private int id;
 
-    @OneToMany (mappedBy = "dashboard_id", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "dashboard_id", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Stock> stocks = new ArrayList<>();
 
     @Override
-    public String toString(){
+    public String toString() {
         return id + "";
     }
 

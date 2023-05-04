@@ -1,11 +1,11 @@
 package se.onlyfin.onlyfinbackend.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * This class is responsible for modeling the user table in the database.
@@ -18,12 +18,16 @@ public class User {
     private Integer id;
 
     @Column(name = "username")
+    @NotNull
     private String username;
 
     @Column(name = "password")
+    @NotNull
     private String password;
 
     @Column(name = "email")
+    @Email
+    @NotNull
     private String email;
 
     @Column(name = "enabled")
@@ -45,6 +49,10 @@ public class User {
 
     @Column(name = "about_me", columnDefinition = "TEXT")
     private String aboutMe = "Lorem ipsum";
+
+    @OneToMany(mappedBy = "targetUser")
+    @JsonBackReference
+    private List<AnalystReview> reviews;
 
     public String getUsername() {
         return username;
@@ -125,5 +133,13 @@ public class User {
     public void setAboutMe(String aboutMe) {
         this.aboutMe = aboutMe;
     }
-    
+
+    public List<AnalystReview> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<AnalystReview> reviews) {
+        this.reviews = reviews;
+    }
+
 }

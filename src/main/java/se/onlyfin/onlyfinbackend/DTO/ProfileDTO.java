@@ -7,5 +7,4 @@ package se.onlyfin.onlyfinbackend.DTO;
  * @param id       id of the user
  */
 public record ProfileDTO(String username, int id) {
-
 }

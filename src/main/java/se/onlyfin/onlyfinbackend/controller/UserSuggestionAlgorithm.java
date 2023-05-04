@@ -1,13 +1,13 @@
 package se.onlyfin.onlyfinbackend.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.onlyfin.onlyfinbackend.DTO.ProfileDTO;
 import se.onlyfin.onlyfinbackend.DTO.UserRecommendationDTO;
+import se.onlyfin.onlyfinbackend.model.NoSuchUserException;
 import se.onlyfin.onlyfinbackend.model.Subscription;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.model.dashboard_entity.Dashboard;
@@ -21,17 +21,17 @@ import java.util.*;
 @RestController
 @RequestMapping("/algo")
 @CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
-public class UserSuggestionAlgorith {
+public class UserSuggestionAlgorithm {
     private final UserRepository userRepository;
     private final DashboardController dashboardController;
 
-    public UserSuggestionAlgorith(UserRepository userRepository, DashboardController dashboardController) {
+    public UserSuggestionAlgorithm(UserRepository userRepository, DashboardController dashboardController) {
         this.userRepository = userRepository;
         this.dashboardController = dashboardController;
     }
 
     /**
-     * This algorith returns user profiles that the logged-in user could be interested in.
+     * This algorithm returns user profiles that the logged-in user could be interested in.
      * Tries to give the user a list that includes the most active non-subscribed analysts for all stocks the user's
      * subscriptions have.
      * A limitation with this algorithm is that it can't recommend anything if the user isn't subscribed to anyone,
@@ -41,10 +41,10 @@ public class UserSuggestionAlgorith {
      * @return No-content if no suggestions can be made or List if suggestions can be made
      */
     @GetMapping("/by-stocks-covered-weighed-by-post-amount")
-    public ResponseEntity<List<UserRecommendationDTO>> suggestAnalystsBasedOnCommonStock(Principal principal) {
+    public ResponseEntity<List<UserRecommendationDTO>> suggestAnalystsBasedOnCommonStock(Principal principal) throws NoSuchUserException {
         //fetch logged-in user
         User userFetchingRecommendedList = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                new UsernameNotFoundException("Username not found"));
+                new NoSuchUserException("Username not found"));
 
         //fetch subscriptions from logged-in user
         List<Subscription> subscriptionList = new ArrayList<>(userFetchingRecommendedList.getSubscriptions());

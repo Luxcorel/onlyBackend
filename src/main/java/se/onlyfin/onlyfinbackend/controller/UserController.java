@@ -1,18 +1,19 @@
 package se.onlyfin.onlyfinbackend.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import se.onlyfin.onlyfinbackend.DTO.AboutMeDTO;
+import se.onlyfin.onlyfinbackend.DTO.AboutMeUpdateDTO;
 import se.onlyfin.onlyfinbackend.DTO.UserDTO;
+import se.onlyfin.onlyfinbackend.model.NoSuchUserException;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.repository.UserRepository;
 
 import java.security.Principal;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -69,7 +70,7 @@ public class UserController {
      * @return ResponseEntity with status code 200 and username if registration was successful.
      */
     @PostMapping("/register")
-    public ResponseEntity<String> registerNewUser(@RequestBody UserDTO user) {
+    public ResponseEntity<String> registerNewUser(@RequestBody @Valid UserDTO user) {
         if (userRepository.existsByEmail(user.email())) {
             return ResponseEntity.badRequest().body("Email is already registered!");
         }
@@ -178,8 +179,9 @@ public class UserController {
      * @return "about me" text & sub info
      */
     @GetMapping("/fetch-about-me-with-sub-info")
-    public ResponseEntity<AboutMeDTO> fetchAboutMeWithSubInfoFor(@RequestParam String username, Principal principal) {
-        User fetchingUser = userRepository.findByUsername(principal.getName()).orElseThrow(() -> new UsernameNotFoundException("Username not found!"));
+    public ResponseEntity<AboutMeDTO> fetchAboutMeWithSubInfoFor(@RequestParam String username, Principal principal) throws NoSuchUserException {
+        User fetchingUser = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
+                new NoSuchUserException("Username not found!"));
 
         Optional<User> userOptionalTargetUser = userRepository.findByUsername(username);
         if (userOptionalTargetUser.isEmpty()) {
@@ -195,25 +197,25 @@ public class UserController {
     /**
      * Method to update the "about me" text for the logged-in user
      *
-     * @param principal The logged-in user
-     * @param text      the new "about me" text
+     * @param principal        The logged-in user
+     * @param aboutMeUpdateDTO object containing the new "about me" text
      * @return Updated text if ok, bad request otherwise
      */
     @PutMapping("update-about-me")
-    public ResponseEntity<?> updateAboutMe(Principal principal, @RequestBody String text) {
+    public ResponseEntity<?> updateAboutMe(Principal principal, @RequestBody AboutMeUpdateDTO aboutMeUpdateDTO) {
         Optional<User> userOptional = userRepository.findByUsername(principal.getName());
         if (userOptional.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        if (text == null) {
+        if (aboutMeUpdateDTO == null) {
             return ResponseEntity.badRequest().build();
         }
 
         User userWantingToUpdateAboutMe = userOptional.get();
-        userWantingToUpdateAboutMe.setAboutMe(text);
+        userWantingToUpdateAboutMe.setAboutMe(aboutMeUpdateDTO.text());
         userRepository.save(userWantingToUpdateAboutMe);
 
-        return ResponseEntity.ok().body(text);
+        return ResponseEntity.ok().body(aboutMeUpdateDTO.text());
     }
 
     /**

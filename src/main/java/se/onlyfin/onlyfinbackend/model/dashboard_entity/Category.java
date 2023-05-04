@@ -9,26 +9,26 @@ import java.util.List;
 @Table(name = "category")
 public class Category {
 
-    public Category(){
+    public Category() {
 
     }
 
-    public Category(int id){
+    public Category(int id) {
         this.id = id;
     }
 
-    @ManyToOne (fetch = FetchType.LAZY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_id")
     private Stock stock_id;
 
-    @Id
-    @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private int id;
-
-    @Column (name = "name")
+    @Column(name = "name")
     private String name;
 
-    @OneToMany (mappedBy = "category_id", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "category_id", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ModuleEntity> moduleEntities = new ArrayList<>();
 
     public String getName() {
@@ -47,7 +47,7 @@ public class Category {
         return moduleEntities; //moduleEntities;
     }
 
-    public void setModuleEntities(List<ModuleEntity> moduleEntities){
+    public void setModuleEntities(List<ModuleEntity> moduleEntities) {
         this.moduleEntities = moduleEntities;
     }
 
@@ -55,5 +55,7 @@ public class Category {
         return stock_id.getId();
     }
 
-
+    public void setStock_id(Stock stock_id) {
+        this.stock_id = stock_id;
+    }
 }

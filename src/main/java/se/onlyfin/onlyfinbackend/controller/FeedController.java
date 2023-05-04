@@ -2,7 +2,6 @@ package se.onlyfin.onlyfinbackend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +10,7 @@ import se.onlyfin.onlyfinbackend.DTO.CategoryDTO;
 import se.onlyfin.onlyfinbackend.DTO.FeedCardDTO;
 import se.onlyfin.onlyfinbackend.DTO.ProfileDTO;
 import se.onlyfin.onlyfinbackend.DTO.StockDTO;
+import se.onlyfin.onlyfinbackend.model.NoSuchUserException;
 import se.onlyfin.onlyfinbackend.model.Subscription;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.model.dashboard_entity.Category;
@@ -46,10 +46,10 @@ public class FeedController {
      * @return a list of feed cards
      */
     @GetMapping("/all-the-things")
-    public ResponseEntity<List<FeedCardDTO>> fetchAllTheFeed(Principal principal) {
+    public ResponseEntity<List<FeedCardDTO>> fetchAllTheFeed(Principal principal) throws NoSuchUserException {
         //check that logged-in user exists
         User userToFetchFeedFor = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                new UsernameNotFoundException("Username not found!"));
+                new NoSuchUserException("Username not found!"));
 
         //check that user has subscriptions
         if (userToFetchFeedFor.getSubscriptions().size() < 1) {
@@ -115,7 +115,7 @@ public class FeedController {
                                                     moduleEntityUnderCurrentStockThatCurrentAnalystCovers.getUpdatedDate(),
                                                     ZoneId.systemDefault())
                                             .format(DateTimeFormatter
-                                                    .ofPattern("dd/MMMM HH:mm yyyy", Locale.ENGLISH))));
+                                                    .ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH))));
                         }
                     }
                 }
@@ -135,10 +135,10 @@ public class FeedController {
      * @return a list of feed cards from the last 7 days
      */
     @GetMapping("/week")
-    public ResponseEntity<List<FeedCardDTO>> fetchWeeklyFeed(Principal principal) {
+    public ResponseEntity<List<FeedCardDTO>> fetchWeeklyFeed(Principal principal) throws NoSuchUserException {
         //check that logged-in user exists
         User userToFetchFeedFor = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                new UsernameNotFoundException("Username not found!"));
+                new NoSuchUserException("Username not found!"));
 
         //check that user has subscriptions
         if (userToFetchFeedFor.getSubscriptions().size() < 1) {
@@ -205,7 +205,7 @@ public class FeedController {
                                                         moduleEntityUnderCurrentStockThatCurrentAnalystCovers.getUpdatedDate(),
                                                         ZoneId.systemDefault())
                                                 .format(DateTimeFormatter
-                                                        .ofPattern("dd/MMMM HH:mm yyyy", Locale.ENGLISH))));
+                                                        .ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH))));
                             }
                         }
                     }

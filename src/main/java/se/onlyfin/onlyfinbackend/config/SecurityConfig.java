@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.lang.NonNull;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,7 +32,7 @@ public class SecurityConfig {
     /**
      * This method is used to configure which endpoints are protected by roles and which are not.
      * It is here that you can see which endpoints need authentication and which do not.
-     * This method also sets up the login form.
+     * This method is also used to set up the login form.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -51,6 +52,7 @@ public class SecurityConfig {
                                 "/fetch-about-me",
                                 "/update-about-me",
                                 "/dashboard/**",
+                                "/dashboard/getStockRef",
                                 "/studio/**",
                                 "/studio/deleteStock/**",
                                 "/studio/deleteCategory/**",
@@ -66,7 +68,9 @@ public class SecurityConfig {
                                 "/user-subscription-list-sorted-by-postdate",
                                 "/user-subscription-list-sorted-by-update-date",
                                 "/algo/**",
-                                "/find-analysts-that-cover-stock"
+                                "/find-analysts-that-cover-stock",
+                                "/reviews/**",
+                                "/error"
                         )
                         .hasRole("USER")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -79,29 +83,11 @@ public class SecurityConfig {
                         )
                         .permitAll()
                         //uncomment the row below to enable user debug:
-                        //.requestMatchers("/user-debug").permitAll()
+                        .requestMatchers("/user-debug").permitAll()
                 )
-                .formLogin()
-                .loginProcessingUrl("/plz")
-                .successHandler(new LoginSuccessHandlerDoNothingImpl())
-                .failureHandler(new LoginFailureHandlerDoNothingImpl())
-                .loginPage("https://onlyfrontend-production.up.railway.app/Login");
+                .formLogin().loginProcessingUrl("/plz").successHandler(new LoginSuccessHandlerDoNothingImpl());
         return http.build();
     }
-
-    /**
-     * This method can be used to disable authentication globally for testing purposes.
-     * It should not be used in production.
-     */
-    /*
-    @Bean
-    public WebSecurityCustomizer ignoringCustomizer() {
-        //DISABLE AUTH GLOBALLY
-        return (web) -> web.ignoring().requestMatchers("/**");
-
-    }
-
-     */
 
     /**
      * This method is used to configure which password encoder to use.
@@ -111,14 +97,20 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * This method is used to configure CORS globally for the application.
+     *
+     * @return a WebMvcConfigurer that allows CORS from localhost:3000
+     */
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(CorsRegistry registry) {
+            public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**").allowedOrigins("https://onlyfrontend-production.up.railway.app").allowCredentials(true);
             }
         };
     }
+
 
 }
