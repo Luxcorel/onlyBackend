@@ -7,13 +7,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.onlyfin.onlyfinbackend.DTO.ProfileDTO;
 import se.onlyfin.onlyfinbackend.DTO.UserRecommendationDTO;
-import se.onlyfin.onlyfinbackend.model.NoSuchUserException;
 import se.onlyfin.onlyfinbackend.model.Subscription;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.model.dashboard_entity.Dashboard;
 import se.onlyfin.onlyfinbackend.model.dashboard_entity.Stock;
 import se.onlyfin.onlyfinbackend.model.dashboard_entity.StockRef;
-import se.onlyfin.onlyfinbackend.repository.UserRepository;
+import se.onlyfin.onlyfinbackend.service.UserService;
 
 import java.security.Principal;
 import java.util.*;
@@ -22,12 +21,12 @@ import java.util.*;
 @RequestMapping("/algo")
 @CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 public class UserSuggestionAlgorithm {
-    private final UserRepository userRepository;
     private final DashboardController dashboardController;
+    private final UserService userService;
 
-    public UserSuggestionAlgorithm(UserRepository userRepository, DashboardController dashboardController) {
-        this.userRepository = userRepository;
+    public UserSuggestionAlgorithm(DashboardController dashboardController, UserService userService) {
         this.dashboardController = dashboardController;
+        this.userService = userService;
     }
 
     /**
@@ -41,10 +40,9 @@ public class UserSuggestionAlgorithm {
      * @return No-content if no suggestions can be made or List if suggestions can be made
      */
     @GetMapping("/by-stocks-covered-weighed-by-post-amount")
-    public ResponseEntity<List<UserRecommendationDTO>> suggestAnalystsBasedOnCommonStock(Principal principal) throws NoSuchUserException {
+    public ResponseEntity<List<UserRecommendationDTO>> suggestAnalystsBasedOnCommonStock(Principal principal) {
         //fetch logged-in user
-        User userFetchingRecommendedList = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                new NoSuchUserException("Username not found"));
+        User userFetchingRecommendedList = userService.getUserOrException(principal.getName());
 
         //fetch subscriptions from logged-in user
         List<Subscription> subscriptionList = new ArrayList<>(userFetchingRecommendedList.getSubscriptions());
@@ -57,7 +55,7 @@ public class UserSuggestionAlgorithm {
                 .toList());
 
         //create a list of not subscribed-to analysts
-        List<User> notSubscribedToAnalystsList = new ArrayList<>(userRepository.findByisAnalystIsTrue());
+        List<User> notSubscribedToAnalystsList = new ArrayList<>(userService.getAllAnalysts());
         notSubscribedToAnalystsList.removeIf(subscribedToAnalysts::contains);
         notSubscribedToAnalystsList.remove(userFetchingRecommendedList);
         if (notSubscribedToAnalystsList.isEmpty()) {
@@ -65,13 +63,14 @@ public class UserSuggestionAlgorithm {
         }
 
         //Map the strongest commonalities between the subscribed-to analysts.
-        //Use name of stock_ref as key. Use Integer for how many of the subbed analysts cover that stock
+        //Use the name of stock_ref as a key.
+        // Use Integer for how many of the subbed analysts cover that stock
         HashMap<StockRef, Integer> commonalityMap = new HashMap<>();
 
         //go through all analysts
         for (User currentSubscribedToAnalyst : subscribedToAnalysts) {
             //fetch current analysts dashboard
-            Dashboard analystsDashboard = dashboardController.fetchDashboard(currentSubscribedToAnalyst.getId());
+            Dashboard analystsDashboard = dashboardController.fetchDashboardOrNull(currentSubscribedToAnalyst.getId());
             if (analystsDashboard != null) {
                 //fetch stocks under dashboard
                 for (Stock currentStock : analystsDashboard.getStocks()) {
@@ -100,7 +99,7 @@ public class UserSuggestionAlgorithm {
         //go through all analysts
         for (User currentAnalyst : notSubscribedToAnalystsList) {
             //fetch analyst's dashboard
-            Dashboard currentDashboard = dashboardController.fetchDashboard(currentAnalyst.getId());
+            Dashboard currentDashboard = dashboardController.fetchDashboardOrNull(currentAnalyst.getId());
             if (currentDashboard != null) {
                 //fetch all stock objects
                 for (Stock currentStock : currentDashboard.getStocks()) {

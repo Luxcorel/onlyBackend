@@ -27,7 +27,7 @@ public class UserControllerTests {
     @BeforeEach
     void setUp() {
         userRepository = Mockito.mock(UserRepository.class);
-        userController = new UserController(userRepository, null);
+        userController = new UserController(null, null);
     }
 
     /**

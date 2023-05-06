@@ -1,10 +1,10 @@
 package se.onlyfin.onlyfinbackend.config;
 
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.lang.NonNull;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -40,6 +40,15 @@ public class SecurityConfig {
                 csrf().disable()
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers(
+                                "/",
+                                "/register",
+                                "/plz",
+                                "/login",
+                                "/assets/**",
+                                "/dashboard/get/**"
+                        )
+                        .permitAll()
+                        .requestMatchers(
                                 "/user",
                                 "/search-all-analysts",
                                 "/get-analyst-by-name",
@@ -52,7 +61,6 @@ public class SecurityConfig {
                                 "/fetch-about-me",
                                 "/update-about-me",
                                 "/dashboard/**",
-                                "/dashboard/getStockRef",
                                 "/studio/**",
                                 "/studio/deleteStock/**",
                                 "/studio/deleteCategory/**",
@@ -70,22 +78,18 @@ public class SecurityConfig {
                                 "/algo/**",
                                 "/find-analysts-that-cover-stock",
                                 "/reviews/**",
-                                "/error"
+                                "/error",
+                                "/password-update"
                         )
                         .hasRole("USER")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(
-                                "/",
-                                "/register",
-                                "/plz",
-                                "/login",
-                                "/assets/**"
-                        )
-                        .permitAll()
                         //uncomment the row below to enable user debug:
                         .requestMatchers("/user-debug").permitAll()
                 )
-                .formLogin().loginProcessingUrl("/plz").successHandler(new LoginSuccessHandlerDoNothingImpl());
+                .formLogin()
+                .loginProcessingUrl("/plz")
+                .successHandler(new LoginSuccessHandlerDoNothingImpl())
+                .failureHandler(new LoginFailureHandlerDoNothingImpl());
         return http.build();
     }
 
@@ -107,7 +111,7 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("/**").allowedOrigins("https://onlyfrontend-production.up.railway.app").allowCredentials(true);
+                registry.addMapping("/**").allowedOrigins("http://localhost:3000").allowCredentials(true);
             }
         };
     }

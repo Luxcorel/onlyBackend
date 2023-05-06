@@ -31,6 +31,9 @@ public class ModuleEntity {
     @Column(name = "updated_date", updatable = false, insertable = false)
     private Instant updatedDate;
 
+    @Column(name = "feed_card_id", insertable = false, updatable = false)
+    private String feedCardId;
+
     public int getId() {
         return id;
     }

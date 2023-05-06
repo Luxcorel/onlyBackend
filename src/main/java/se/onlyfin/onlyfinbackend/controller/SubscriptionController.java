@@ -4,11 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.onlyfin.onlyfinbackend.DTO.ProfileDTO;
-import se.onlyfin.onlyfinbackend.model.NoSuchUserException;
 import se.onlyfin.onlyfinbackend.model.Subscription;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.repository.SubscriptionRepository;
-import se.onlyfin.onlyfinbackend.repository.UserRepository;
+import se.onlyfin.onlyfinbackend.service.UserService;
 
 import java.security.Principal;
 import java.time.Instant;
@@ -20,16 +19,16 @@ import java.util.*;
 @CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
 @RestController
 public class SubscriptionController {
-    private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final DashboardController dashboardController;
+    private final UserService userService;
 
     @Autowired
-    public SubscriptionController(UserRepository userRepository, SubscriptionRepository subscriptionRepository,
-                                  DashboardController dashboardController) {
-        this.userRepository = userRepository;
+    public SubscriptionController(SubscriptionRepository subscriptionRepository,
+                                  DashboardController dashboardController, UserService userService) {
         this.subscriptionRepository = subscriptionRepository;
         this.dashboardController = dashboardController;
+        this.userService = userService;
     }
 
     /**
@@ -40,18 +39,15 @@ public class SubscriptionController {
      * @return response entity with the username of the subscribed-to user if successful
      */
     @PostMapping("/subscribe")
-    public ResponseEntity<String> addSubscription(Principal principal, @RequestParam("username") String username) throws NoSuchUserException {
-        User userWantingToSubscribe =
-                userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                        new NoSuchUserException("Logged in user not present in db"));
+    public ResponseEntity<String> addSubscription(Principal principal, @RequestParam("username") String username) {
+        User userWantingToSubscribe = userService.getUserOrException(principal.getName());
 
         //check that authenticated user is not changing other users' subscriptions
         if (!Objects.equals(userWantingToSubscribe.getUsername(), principal.getName())) {
             return ResponseEntity.badRequest().build();
         }
 
-        User userToSubscribeTo = userRepository.findByUsername(username).orElseThrow(() ->
-                new NoSuchUserException("Subscribe-to user not found with ID " + username));
+        User userToSubscribeTo = userService.getUserOrException(username);
 
         if (subscriptionRepository.existsBySubscriberAndSubscribedTo(userWantingToSubscribe, userToSubscribeTo)) {
             return ResponseEntity.badRequest().body("Already subscribed");
@@ -74,27 +70,19 @@ public class SubscriptionController {
      * @return response entity with the username of the unsubscribed-from user if successful
      */
     @DeleteMapping("/unsubscribe")
-    public ResponseEntity<String> removeSubscription(Principal principal, @RequestParam("username") String username) throws NoSuchUserException {
+    public ResponseEntity<String> removeSubscription(Principal principal, @RequestParam("username") String username) {
+        User userWantingToUnsubscribe = userService.getUserOrException(principal.getName());
 
-        User userWantingToUnsubscribe = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                new NoSuchUserException("Logged in user not present in db"));
-
-        //check that authenticated user is not changing other users' subscriptions
-        if (!Objects.equals(userWantingToUnsubscribe.getUsername(), principal.getName())) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        User userToUnsubscribeFrom = userRepository.findByUsername(username).orElseThrow(() ->
-                new NoSuchUserException("Subscribed-to user not found with ID " + username));
+        User userToUnsubscribeFrom = userService.getUserOrException(username);
 
         Optional<Subscription> subscriptionOptional =
                 subscriptionRepository.findBySubscriberAndSubscribedTo(userWantingToUnsubscribe, userToUnsubscribeFrom);
-
         if (subscriptionOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        Subscription targetSubscription = subscriptionOptional.get();
 
-        subscriptionRepository.delete(subscriptionOptional.get());
+        subscriptionRepository.delete(targetSubscription);
 
         return ResponseEntity.ok().body(userToUnsubscribeFrom.getUsername());
     }
@@ -107,11 +95,10 @@ public class SubscriptionController {
      */
     @GetMapping("/fetch-current-user-subscriptions")
     public ResponseEntity<List<ProfileDTO>> fetchCurrentUserSubscriptions(Principal principal) {
-        Optional<User> userOptional = userRepository.findByUsername(principal.getName());
-        if (userOptional.isEmpty()) {
+        User userToFetchSubscriptionsFrom = userService.getUserOrNull(principal.getName());
+        if (userToFetchSubscriptionsFrom == null) {
             return ResponseEntity.badRequest().build();
         }
-        User userToFetchSubscriptionsFrom = userOptional.get();
 
         List<Subscription> subscriptionList = subscriptionRepository.findBySubscriber(userToFetchSubscriptionsFrom);
         List<ProfileDTO> subscriptionsDTOList = new ArrayList<>();
@@ -124,26 +111,14 @@ public class SubscriptionController {
     }
 
     /**
-     * Checks if a user is subscribed to another
-     *
-     * @param subscriber   the target subscribing user
-     * @param subscribedTo the target subscribed-to user
-     * @return if the user is subscribed
-     */
-    public boolean isUserSubscribedToThisUser(User subscriber, User subscribedTo) {
-        return subscriptionRepository.existsBySubscriberAndSubscribedTo(subscriber, subscribedTo);
-    }
-
-    /**
      * Generates a subscription list sorted by the latest post date of all the analyst posts
      *
      * @param principal the logged-in user
      * @return postdate-sorted analyst profile list
      */
     @GetMapping("/user-subscription-list-sorted-by-postdate")
-    public ResponseEntity<List<ProfileDTO>> generateUserSubscriptionListByPostDate(Principal principal) throws NoSuchUserException {
-        User userToFetchSubListFor = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                new NoSuchUserException("Username not found!"));
+    public ResponseEntity<List<ProfileDTO>> generateUserSubscriptionListByPostDate(Principal principal) {
+        User userToFetchSubListFor = userService.getUserOrException(principal.getName());
 
         List<Subscription> subscriptionList =
                 new ArrayList<>(subscriptionRepository.findBySubscriber(userToFetchSubListFor));
@@ -177,9 +152,8 @@ public class SubscriptionController {
      * @return updated-date-sorted analyst profile list
      */
     @GetMapping("/user-subscription-list-sorted-by-update-date")
-    public ResponseEntity<List<ProfileDTO>> generateUserSubscriptionListByUpdateDate(Principal principal) throws NoSuchUserException {
-        User userToFetchSubListFor = userRepository.findByUsername(principal.getName()).orElseThrow(() ->
-                new NoSuchUserException("Username not found!"));
+    public ResponseEntity<List<ProfileDTO>> generateUserSubscriptionListByUpdateDate(Principal principal) {
+        User userToFetchSubListFor = userService.getUserOrException(principal.getName());
 
         List<Subscription> subscriptionList =
                 new ArrayList<>(subscriptionRepository.findBySubscriber(userToFetchSubListFor));
@@ -204,6 +178,17 @@ public class SubscriptionController {
                 new ProfileDTO(currentUser.getUsername(), currentUser.getId())));
 
         return ResponseEntity.ok().body(profileDTOList);
+    }
+
+    /**
+     * Checks if a user is subscribed to another
+     *
+     * @param subscriber   the target subscribing user
+     * @param subscribedTo the target subscribed-to user
+     * @return if the user is subscribed
+     */
+    public boolean isUserSubscribedToThisUser(User subscriber, User subscribedTo) {
+        return subscriptionRepository.existsBySubscriberAndSubscribedTo(subscriber, subscribedTo);
     }
 
 }
