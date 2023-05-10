@@ -79,4 +79,5 @@ public class OnlyfinUserPrincipal implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }

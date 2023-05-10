@@ -1,5 +1,6 @@
 package se.onlyfin.onlyfinbackend.controller;
 
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,14 +21,14 @@ import java.util.*;
 @RestController
 public class SubscriptionController {
     private final SubscriptionRepository subscriptionRepository;
-    private final DashboardController dashboardController;
+    private final FeedController feedController;
     private final UserService userService;
 
     @Autowired
-    public SubscriptionController(SubscriptionRepository subscriptionRepository,
-                                  DashboardController dashboardController, UserService userService) {
+    public SubscriptionController(SubscriptionRepository subscriptionRepository, FeedController feedController,
+                                  UserService userService) {
         this.subscriptionRepository = subscriptionRepository;
-        this.dashboardController = dashboardController;
+        this.feedController = feedController;
         this.userService = userService;
     }
 
@@ -39,24 +40,24 @@ public class SubscriptionController {
      * @return response entity with the username of the subscribed-to user if successful
      */
     @PostMapping("/subscribe")
-    public ResponseEntity<String> addSubscription(Principal principal, @RequestParam("username") String username) {
-        User userWantingToSubscribe = userService.getUserOrException(principal.getName());
+    public ResponseEntity<String> addSubscription(@RequestParam("username") String username, Principal principal) {
+        User subscribingUser = userService.getUserOrException(principal.getName());
 
-        //check that authenticated user is not changing other users' subscriptions
-        if (!Objects.equals(userWantingToSubscribe.getUsername(), principal.getName())) {
+        User userToSubscribeTo = userService.getUserOrNull(username);
+        if (userToSubscribeTo == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (Objects.equals(subscribingUser, userToSubscribeTo)) {
             return ResponseEntity.badRequest().build();
         }
 
-        User userToSubscribeTo = userService.getUserOrException(username);
-
-        if (subscriptionRepository.existsBySubscriberAndSubscribedTo(userWantingToSubscribe, userToSubscribeTo)) {
+        if (isUserSubscribedToThisUser(subscribingUser, userToSubscribeTo)) {
             return ResponseEntity.badRequest().body("Already subscribed");
         }
 
         Subscription subscription = new Subscription();
-        subscription.setSubscriber(userWantingToSubscribe);
+        subscription.setSubscriber(subscribingUser);
         subscription.setSubscribedTo(userToSubscribeTo);
-
         subscriptionRepository.save(subscription);
 
         return ResponseEntity.ok().body(userToSubscribeTo.getUsername());
@@ -70,10 +71,13 @@ public class SubscriptionController {
      * @return response entity with the username of the unsubscribed-from user if successful
      */
     @DeleteMapping("/unsubscribe")
-    public ResponseEntity<String> removeSubscription(Principal principal, @RequestParam("username") String username) {
+    public ResponseEntity<String> removeSubscription(@RequestParam("username") String username, Principal principal) {
         User userWantingToUnsubscribe = userService.getUserOrException(principal.getName());
 
-        User userToUnsubscribeFrom = userService.getUserOrException(username);
+        User userToUnsubscribeFrom = userService.getUserOrNull(username);
+        if (userToUnsubscribeFrom == null) {
+            return ResponseEntity.notFound().build();
+        }
 
         Optional<Subscription> subscriptionOptional =
                 subscriptionRepository.findBySubscriberAndSubscribedTo(userWantingToUnsubscribe, userToUnsubscribeFrom);
@@ -95,19 +99,11 @@ public class SubscriptionController {
      */
     @GetMapping("/fetch-current-user-subscriptions")
     public ResponseEntity<List<ProfileDTO>> fetchCurrentUserSubscriptions(Principal principal) {
-        User userToFetchSubscriptionsFrom = userService.getUserOrNull(principal.getName());
-        if (userToFetchSubscriptionsFrom == null) {
-            return ResponseEntity.badRequest().build();
-        }
+        User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<Subscription> subscriptionList = subscriptionRepository.findBySubscriber(userToFetchSubscriptionsFrom);
-        List<ProfileDTO> subscriptionsDTOList = new ArrayList<>();
-        subscriptionList.forEach((currentSubscription) -> subscriptionsDTOList.add(new ProfileDTO(
-                currentSubscription.getSubscribedTo().getUsername(),
-                currentSubscription.getSubscribedTo().getId()))
-        );
+        List<ProfileDTO> profiles = getUserSubscriptionsAsProfiles(fetchingUser);
 
-        return ResponseEntity.ok().body(subscriptionsDTOList);
+        return ResponseEntity.ok().body(profiles);
     }
 
     /**
@@ -118,31 +114,26 @@ public class SubscriptionController {
      */
     @GetMapping("/user-subscription-list-sorted-by-postdate")
     public ResponseEntity<List<ProfileDTO>> generateUserSubscriptionListByPostDate(Principal principal) {
-        User userToFetchSubListFor = userService.getUserOrException(principal.getName());
+        User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<Subscription> subscriptionList =
-                new ArrayList<>(subscriptionRepository.findBySubscriber(userToFetchSubListFor));
-        if (subscriptionList.isEmpty()) {
+        List<Subscription> subscriptions = new ArrayList<>(subscriptionRepository.findBySubscriber(fetchingUser));
+        if (subscriptions.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
         List<User> subscribedToAnalysts = new ArrayList<>();
-        for (Subscription currentSubscription : subscriptionList) {
+        for (Subscription currentSubscription : subscriptions) {
             subscribedToAnalysts.add(currentSubscription.getSubscribedTo());
         }
 
         //we want the latest poster at the top, therefore, reverse order is used(default is ascending order)
         TreeMap<Instant, User> analystsLastPostTime = new TreeMap<>(Collections.reverseOrder());
         for (User currentAnalyst : subscribedToAnalysts) {
-            analystsLastPostTime.put(dashboardController.fetchAnalystsLastPostTime(currentAnalyst), currentAnalyst);
+            analystsLastPostTime.put(feedController.fetchAnalystsLastPostTime(currentAnalyst), currentAnalyst);
         }
-        List<User> sortedUserList = new ArrayList<>(analystsLastPostTime.values());
+        List<ProfileDTO> profiles = craftProfileListFromInstantAndUserTreemap(analystsLastPostTime);
 
-        List<ProfileDTO> profileDTOList = new ArrayList<>();
-        sortedUserList.forEach((currentUser) -> profileDTOList.add(
-                new ProfileDTO(currentUser.getUsername(), currentUser.getId())));
-
-        return ResponseEntity.ok().body(profileDTOList);
+        return ResponseEntity.ok().body(profiles);
     }
 
     /**
@@ -153,31 +144,95 @@ public class SubscriptionController {
      */
     @GetMapping("/user-subscription-list-sorted-by-update-date")
     public ResponseEntity<List<ProfileDTO>> generateUserSubscriptionListByUpdateDate(Principal principal) {
-        User userToFetchSubListFor = userService.getUserOrException(principal.getName());
+        User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<Subscription> subscriptionList =
-                new ArrayList<>(subscriptionRepository.findBySubscriber(userToFetchSubListFor));
-        if (subscriptionList.isEmpty()) {
+        List<Subscription> subscriptions = new ArrayList<>(subscriptionRepository.findBySubscriber(fetchingUser));
+        if (subscriptions.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
         List<User> subscribedToAnalysts = new ArrayList<>();
-        for (Subscription currentSubscription : subscriptionList) {
+        for (Subscription currentSubscription : subscriptions) {
             subscribedToAnalysts.add(currentSubscription.getSubscribedTo());
         }
 
         //we want the latest poster at the top, therefore, reverse order is used(default is ascending order)
-        TreeMap<Instant, User> analystsLastPostTime = new TreeMap<>(Collections.reverseOrder());
+        TreeMap<Instant, User> analystsLastUpdateTime = new TreeMap<>(Collections.reverseOrder());
         for (User currentAnalyst : subscribedToAnalysts) {
-            analystsLastPostTime.put(dashboardController.fetchAnalystsLastUpdateTime(currentAnalyst), currentAnalyst);
+            analystsLastUpdateTime.put(feedController.fetchAnalystsLastUpdateTime(currentAnalyst), currentAnalyst);
         }
-        List<User> sortedUserList = new ArrayList<>(analystsLastPostTime.values());
+        List<ProfileDTO> profiles = craftProfileListFromInstantAndUserTreemap(analystsLastUpdateTime);
+
+        return ResponseEntity.ok().body(profiles);
+    }
+
+    /**
+     * Fetches the subscription count for the logged-in user
+     *
+     * @param principal the logged-in user
+     * @return the subscription count for the logged-in user
+     */
+    @GetMapping("/subscriptions/get-my-subscribe-count")
+    public ResponseEntity<Integer> fetchSubCountForPrincipal(Principal principal) {
+        User targetUser = userService.getUserOrNull(principal.getName());
+
+        Integer subscriptionCount = subscriptionRepository.countAllBySubscribedTo(targetUser);
+
+        return ResponseEntity.ok().body(subscriptionCount);
+    }
+
+    /**
+     * Fetches the subscription count for the target user
+     *
+     * @param targetUsername the username of the target user
+     * @return the subscription count for the target user
+     */
+    @GetMapping("/subscriptions/get-subscribe-count")
+    public ResponseEntity<Integer> fetchSubCountForTarget(@RequestParam String targetUsername) {
+        User targetUser = userService.getUserOrNull(targetUsername);
+        if (targetUser == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Integer subscriptionCount = subscriptionRepository.countAllBySubscribedTo(targetUser);
+
+        return ResponseEntity.ok().body(subscriptionCount);
+    }
+
+    /**
+     * Checks if the logged-in user is subscribed to the target user
+     *
+     * @param username  the username of the target user
+     * @param principal the logged-in user
+     * @return if the logged-in user is subscribed to the target user
+     */
+    @GetMapping("/subscriptions/is-user-subscribed-to")
+    public ResponseEntity<Boolean> isUserSubscribedToTarget(@RequestParam String username, Principal principal) {
+        User fetchingUser = userService.getUserOrException(principal.getName());
+
+        User targetUser = userService.getUserOrNull(username);
+        if (targetUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        boolean isUserSubscribed = isUserSubscribedToThisUser(fetchingUser, targetUser);
+
+        return ResponseEntity.ok().body(isUserSubscribed);
+    }
+
+    /**
+     * Helper method to craft a profile list from a treemap of instants and users
+     *
+     * @param analystsLastUpdateTime the treemap of instants and users
+     * @return a profile list in the same order as the treemap
+     */
+    private List<ProfileDTO> craftProfileListFromInstantAndUserTreemap(TreeMap<Instant, User> analystsLastUpdateTime) {
+        List<User> sortedUserList = new ArrayList<>(analystsLastUpdateTime.values());
 
         List<ProfileDTO> profileDTOList = new ArrayList<>();
         sortedUserList.forEach((currentUser) -> profileDTOList.add(
                 new ProfileDTO(currentUser.getUsername(), currentUser.getId())));
-
-        return ResponseEntity.ok().body(profileDTOList);
+        return profileDTOList;
     }
 
     /**
@@ -189,6 +244,36 @@ public class SubscriptionController {
      */
     public boolean isUserSubscribedToThisUser(User subscriber, User subscribedTo) {
         return subscriptionRepository.existsBySubscriberAndSubscribedTo(subscriber, subscribedTo);
+    }
+
+    /**
+     * @param targetUser the target user
+     * @return a list of profiles with the users that the target user is subscribed to
+     */
+    public List<ProfileDTO> getUserSubscriptionsAsProfiles(@NonNull User targetUser) {
+        List<Subscription> subscriptions = new ArrayList<>(subscriptionRepository.findBySubscriber(targetUser));
+
+        List<ProfileDTO> profiles = new ArrayList<>();
+        subscriptions.forEach((currentSubscription) -> profiles.add(new ProfileDTO(
+                currentSubscription.getSubscribedTo().getUsername(),
+                currentSubscription.getSubscribedTo().getId()))
+        );
+
+        return profiles;
+    }
+
+    /**
+     * Removes all subscriptions related to a user
+     *
+     * @param targetUser the target user
+     */
+    public void removeAllSubscriptionsRelatedToUser(User targetUser) {
+        subscriptionRepository.deleteAllBySubscriber(targetUser);
+        subscriptionRepository.deleteAllBySubscribedTo(targetUser);
+    }
+
+    public List<String> getTop7MostSubscribedUsernames() {
+        return subscriptionRepository.find7MostSubscribedUsernames();
     }
 
 }

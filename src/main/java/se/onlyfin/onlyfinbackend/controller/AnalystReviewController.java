@@ -140,18 +140,29 @@ public class AnalystReviewController {
             return ResponseEntity.badRequest().build();
         }
 
-        List<AnalystReview> reviewList = new ArrayList<>(targetUser.getReviews());
-        if (reviewList.isEmpty()) {
+        List<AnalystReview> reviews = new ArrayList<>(targetUser.getReviews());
+        if (reviews.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
-        List<AnalystReviewDTO> reviewDTOList = reviewList.stream()
+        List<AnalystReviewDTO> reviewDTOs = reviews.stream()
                 .map(currentReview -> new AnalystReviewDTO(
                         currentReview.getAuthorUsername(),
                         currentReview.getReviewText()))
                 .toList();
 
-        return ResponseEntity.ok().body(reviewDTOList);
+        return ResponseEntity.ok().body(reviewDTOs);
+    }
+
+    /**
+     * Deletes all reviews related to the target user
+     *
+     * @param targetUser the target user
+     */
+    @Transactional
+    public void deleteAllReviewsRelatedToUser(User targetUser) {
+        analystReviewRepository.deleteAllByAuthorUsername(targetUser.getUsername());
+        analystReviewRepository.deleteAllByTargetUser(targetUser);
     }
 
 }

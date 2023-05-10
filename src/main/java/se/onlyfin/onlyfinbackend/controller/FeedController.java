@@ -1,11 +1,9 @@
 package se.onlyfin.onlyfinbackend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.NonNull;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import se.onlyfin.onlyfinbackend.DTO.CategoryDTO;
 import se.onlyfin.onlyfinbackend.DTO.FeedCardDTO;
 import se.onlyfin.onlyfinbackend.DTO.ProfileDTO;
@@ -55,9 +53,9 @@ public class FeedController {
      */
     @GetMapping("/all-the-things")
     public ResponseEntity<List<FeedCardDTO>> fetchFeedAll(Principal principal) {
-        User userToFetchFeedFor = userService.getUserOrException(principal.getName());
+        User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<Subscription> subscriptions = subscriptionRepository.findBySubscriber(userToFetchFeedFor);
+        List<Subscription> subscriptions = subscriptionRepository.findBySubscriber(fetchingUser);
         if (subscriptions.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -70,7 +68,10 @@ public class FeedController {
             analystUsernameToIdMap.put(currentAnalyst.getUsername(), currentAnalyst.getId());
         }
 
-        List<FeedCardDTO> feedCardDTOS = craftFeedCardDTOList(analystUsernameToIdMap, feedCards);
+        List<FeedCardDTO> feedCardDTOS = createFeedCardDTOList(analystUsernameToIdMap, feedCards);
+        if (feedCards.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
 
         return ResponseEntity.ok().body(feedCardDTOS);
     }
@@ -83,9 +84,9 @@ public class FeedController {
      */
     @GetMapping("/week")
     public ResponseEntity<List<FeedCardDTO>> fetchFeedWeek(Principal principal) {
-        User userToFetchFeedFor = userService.getUserOrException(principal.getName());
+        User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<Subscription> subscriptions = subscriptionRepository.findBySubscriber(userToFetchFeedFor);
+        List<Subscription> subscriptions = subscriptionRepository.findBySubscriber(fetchingUser);
         if (subscriptions.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -102,9 +103,39 @@ public class FeedController {
             analystUsernameToId.put(currentAnalyst.getUsername(), currentAnalyst.getId());
         }
 
-        List<FeedCardDTO> feedCardDTOS = craftFeedCardDTOList(analystUsernameToId, feedCards);
+        List<FeedCardDTO> feedCardDTOs = createFeedCardDTOList(analystUsernameToId, feedCards);
 
-        return ResponseEntity.ok().body(feedCardDTOS);
+        return ResponseEntity.ok().body(feedCardDTOs);
+    }
+
+    /**
+     * @param days      the number of days to fetch feed cards from
+     * @param principal the user that is logged in
+     * @return a list of feed cards from the last x days
+     */
+    @GetMapping("/days-cutoff")
+    public ResponseEntity<List<FeedCardDTO>> fetchFeedCutoffDays(@RequestParam Integer days, Principal principal) {
+        User fetchingUser = userService.getUserOrException(principal.getName());
+
+        List<Subscription> subscriptions = subscriptionRepository.findBySubscriber(fetchingUser);
+        if (subscriptions.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        Instant cutoffDate = Instant.now().minus(days, ChronoUnit.DAYS);
+        HashMap<String, Integer> analystUsernameToId = new HashMap<>();
+        ArrayList<FeedCard> feedCards = new ArrayList<>();
+        for (Subscription subscription : subscriptions) {
+            User currentAnalyst = subscription.getSubscribedTo();
+            feedCards.addAll(feedCardRepository.findByAnalystUsernameAndPostDateAfterOrderByPostDateDesc(
+                    currentAnalyst.getUsername(),
+                    cutoffDate));
+            analystUsernameToId.put(currentAnalyst.getUsername(), currentAnalyst.getId());
+        }
+
+        List<FeedCardDTO> feedCardDTOs = createFeedCardDTOList(analystUsernameToId, feedCards);
+
+        return ResponseEntity.ok().body(feedCardDTOs);
     }
 
     /**
@@ -180,11 +211,10 @@ public class FeedController {
         for (Subscription currentSubscription : subscriptionList) {
             User ownerOfDashboard = currentSubscription.getSubscribedTo();
 
-            Dashboard ownersDashboard = dashboardController.getDashboard(
+            Dashboard ownersDashboard = dashboardController.fetchDashboardOrNull(
                     currentSubscription
                             .getSubscribedTo()
-                            .getId()
-            ).getBody();
+                            .getId());
 
             dashboardOwnershipMap.put(ownerOfDashboard, ownersDashboard);
         }
@@ -322,13 +352,13 @@ public class FeedController {
     }
 
     /**
-     * This method crafts a list of feed card DTOs using inputted feed cards and analyst username to id map
+     * This method creates a list of feed card DTOs using inputted feed cards and analyst username to an id map
      *
      * @param analystUsernameToIdMap map of analyst usernames to their ids
      * @param feedCards              list of feed cards
      * @return a list of feed card DTOs
      */
-    private static List<FeedCardDTO> craftFeedCardDTOList(HashMap<String, Integer> analystUsernameToIdMap, ArrayList<FeedCard> feedCards) {
+    private static List<FeedCardDTO> createFeedCardDTOList(HashMap<String, Integer> analystUsernameToIdMap, ArrayList<FeedCard> feedCards) {
         return feedCards.stream()
                 .map(feedCard -> new FeedCardDTO(
                         new ProfileDTO(feedCard.getAnalystUsername(), analystUsernameToIdMap.get(feedCard.getAnalystUsername())),
@@ -341,6 +371,24 @@ public class FeedController {
                                 .format(DateTimeFormatter.ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH))))
                 .sorted(Comparator.comparing(FeedCardDTO::postDate).reversed())
                 .collect(Collectors.toList());
+    }
+
+    public Instant fetchAnalystsLastPostTime(@NonNull User targetAnalyst) {
+        Optional<FeedCard> latestInstantOptional = feedCardRepository.findFirstByAnalystUsernameOrderByPostDateDesc(targetAnalyst.getUsername());
+        if (latestInstantOptional.isPresent()) {
+            return latestInstantOptional.get().getPostDate();
+        } else {
+            return Instant.MIN;
+        }
+    }
+
+    public Instant fetchAnalystsLastUpdateTime(@NonNull User targetAnalyst) {
+        Optional<FeedCard> latestInstantOptional = feedCardRepository.findFirstByAnalystUsernameOrderByUpdatedDateDesc(targetAnalyst.getUsername());
+        if (latestInstantOptional.isPresent()) {
+            return latestInstantOptional.get().getPostDate();
+        } else {
+            return Instant.MIN;
+        }
     }
 
 }

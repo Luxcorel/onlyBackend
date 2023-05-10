@@ -34,8 +34,8 @@ public interface FeedCardRepository extends JpaRepository<FeedCard, Integer> {
      */
     List<FeedCard> findByAnalystUsernameOrderByPostDateDesc(String username);
 
-    Optional<FeedCard> findLatestPostDateByAnalystUsername(String username);
+    Optional<FeedCard> findFirstByAnalystUsernameOrderByPostDateDesc(String username);
 
-    Optional<FeedCard> findLatestUpdateDateByAnalystUsername(String username);
+    Optional<FeedCard> findFirstByAnalystUsernameOrderByUpdatedDateDesc(String username);
 
 }

@@ -48,11 +48,9 @@ public class SearchController {
         List<User> foundUsers = new ArrayList<>(userService.getAllAnalysts());
         foundUsers.remove(fetchingUser);
 
-        List<ProfileDTO> usersToReturnToClient = new ArrayList<>();
-        foundUsers.forEach((currentUser ->
-                usersToReturnToClient.add(new ProfileDTO(currentUser.getUsername(), currentUser.getId()))));
+        List<ProfileDTO> profiles = createProfileList(foundUsers);
 
-        return ResponseEntity.ok(usersToReturnToClient);
+        return ResponseEntity.ok().body(profiles);
     }
 
     /**
@@ -69,9 +67,9 @@ public class SearchController {
         }
 
         User fetchedUser = userOptional.get();
-        ProfileDTO profileDTOToSendToClient = new ProfileDTO(fetchedUser.getUsername(), fetchedUser.getId());
+        ProfileDTO profile = new ProfileDTO(fetchedUser.getUsername(), fetchedUser.getId());
 
-        return ResponseEntity.ok().body(profileDTOToSendToClient);
+        return ResponseEntity.ok().body(profile);
     }
 
     /**
@@ -84,17 +82,14 @@ public class SearchController {
     public ResponseEntity<List<ProfileDTO>> searchForAnalysts(@RequestParam String search, Principal principal) {
         User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<User> userList = new ArrayList<>(userService.findAnalystWithUsernameStartingWith(search));
-        userList.remove(fetchingUser);
-        if (userList.isEmpty()) {
+        List<User> foundUsers = new ArrayList<>(userService.findAnalystWithUsernameStartingWith(search));
+        foundUsers.remove(fetchingUser);
+        if (foundUsers.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        List<ProfileDTO> profileDTOListToSend = new ArrayList<>();
-        userList.forEach((currentUser) ->
-                profileDTOListToSend.add(new ProfileDTO(currentUser.getUsername(), currentUser.getId())));
-
-        return ResponseEntity.ok().body(profileDTOListToSend);
+        List<ProfileDTO> profiles = createProfileList(foundUsers);
+        return ResponseEntity.ok().body(profiles);
     }
 
     /**
@@ -109,33 +104,21 @@ public class SearchController {
     public ResponseEntity<List<ProfileWithSubInfoForLoggedInUserDTO>> searchForAnalystsWithSubsIncluded(@RequestParam String search, Principal principal) {
         User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<User> userList = new ArrayList<>(userService.findAnalystWithUsernameStartingWith(search));
-        userList.remove(fetchingUser);
-        if (userList.isEmpty()) {
+        List<User> foundUsers = new ArrayList<>(userService.findAnalystWithUsernameStartingWith(search));
+        foundUsers.remove(fetchingUser);
+        if (foundUsers.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        List<ProfileDTO> searchResults = new ArrayList<>();
-        userList.forEach((currentUser) ->
-                searchResults.add(new ProfileDTO(currentUser.getUsername(), currentUser.getId())));
+        List<ProfileDTO> foundProfiles = createProfileList(foundUsers);
 
-        List<ProfileDTO> loggedInUserSubscriptions =
-                subscriptionController.fetchCurrentUserSubscriptions(principal).getBody();
-        if (loggedInUserSubscriptions == null) {
-            List<ProfileWithSubInfoForLoggedInUserDTO> profileListWithSubscribingFalseInfo = new ArrayList<>();
-
-            searchResults.forEach((currentResult) ->
-                    profileListWithSubscribingFalseInfo.add(
-                            new ProfileWithSubInfoForLoggedInUserDTO(currentResult, false)));
-
-            return ResponseEntity.ok().body(profileListWithSubscribingFalseInfo);
+        List<ProfileDTO> subscriptions = subscriptionController.getUserSubscriptionsAsProfiles(fetchingUser);
+        if (subscriptions == null) {
+            return ResponseEntity.ok().body(getProfilesWithSubscribingFalse(foundProfiles));
         }
 
-        List<ProfileWithSubInfoForLoggedInUserDTO> profileListWithSubInfo = new ArrayList<>();
-        searchResults.forEach((currentResult) -> profileListWithSubInfo.add(new ProfileWithSubInfoForLoggedInUserDTO(
-                currentResult, loggedInUserSubscriptions.contains(currentResult))));
-
-        return ResponseEntity.ok().body(profileListWithSubInfo);
+        List<ProfileWithSubInfoForLoggedInUserDTO> profilesWithSubInfo = getProfilesWithSubInfo(foundProfiles, subscriptions);
+        return ResponseEntity.ok().body(profilesWithSubInfo);
     }
 
     /**
@@ -149,66 +132,79 @@ public class SearchController {
     public ResponseEntity<List<ProfileWithSubInfoForLoggedInUserDTO>> fetchAllAnalystsWithSubsIncluded(Principal principal) {
         User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<User> userList = new ArrayList<>(userService.getAllAnalysts());
-        userList.remove(fetchingUser);
-        if (userList.isEmpty()) {
+        List<User> analysts = new ArrayList<>(userService.getAllAnalysts());
+        analysts.remove(fetchingUser);
+        if (analysts.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        List<ProfileDTO> searchResults = new ArrayList<>();
-        userList.forEach((currentUser) ->
-                searchResults.add(new ProfileDTO(currentUser.getUsername(), currentUser.getId())));
+        List<ProfileDTO> analystProfiles = createProfileList(analysts);
 
-        List<ProfileDTO> loggedInUserSubscriptions =
-                subscriptionController.fetchCurrentUserSubscriptions(principal).getBody();
-        if (loggedInUserSubscriptions == null) {
-            List<ProfileWithSubInfoForLoggedInUserDTO> profileListWithSubscribingFalseInfo = new ArrayList<>();
-
-            searchResults.forEach((currentResult) ->
-                    profileListWithSubscribingFalseInfo.add(
-                            new ProfileWithSubInfoForLoggedInUserDTO(currentResult, false)));
-
-            return ResponseEntity.ok().body(profileListWithSubscribingFalseInfo);
+        List<ProfileDTO> subscriptions = subscriptionController.getUserSubscriptionsAsProfiles(fetchingUser);
+        if (subscriptions == null) {
+            return ResponseEntity.ok().body(getProfilesWithSubscribingFalse(analystProfiles));
         }
 
-        List<ProfileWithSubInfoForLoggedInUserDTO> profileListWithSubInfo = new ArrayList<>();
-        searchResults.forEach((currentResult) -> profileListWithSubInfo.add(new ProfileWithSubInfoForLoggedInUserDTO(
-                currentResult, loggedInUserSubscriptions.contains(currentResult))));
+        List<ProfileWithSubInfoForLoggedInUserDTO> profileListWithSubInfo = getProfilesWithSubInfo(analystProfiles, subscriptions);
 
         return ResponseEntity.ok().body(profileListWithSubInfo);
     }
 
     /**
-     * Finds analysts that cover a target stock
+     * Finds analysts that cover an exact target stock name
      *
      * @param principal the logged-in user
-     * @param stockName name of the target stock
+     * @param stockName exact name of the target stock
      * @return list of analysts covering target stock
      */
     @GetMapping("/find-analysts-that-cover-stock")
-    public ResponseEntity<List<ProfileDTO>> findAnalystsThatCoverStock(Principal principal, @RequestParam String stockName) {
+    public ResponseEntity<List<ProfileDTO>> findAnalystsThatCoverStock(@RequestParam String stockName, Principal principal) {
         User fetchingUser = userService.getUserOrException(principal.getName());
 
         StockRef targetStock = stockReferenceController.fetchStockRefByName(stockName).orElseThrow();
 
-        ArrayList<User> analystList = new ArrayList<>(userService.getAllAnalysts());
-        analystList.remove(fetchingUser);
-        if (analystList.isEmpty()) {
+        ArrayList<User> analysts = new ArrayList<>(userService.getAllAnalysts());
+        analysts.remove(fetchingUser);
+        if (analysts.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
 
-        HashMap<StockRef, ArrayList<User>> coverageMap = dashboardController.fetchCoverageMap(analystList);
-        HashSet<ProfileDTO> analystsCoveringTargetStocks = new HashSet<>();
+        HashMap<StockRef, ArrayList<User>> coverageMap = dashboardController.createCoverageMap(analysts);
+        HashSet<ProfileDTO> analystsCoveringTargetStock = new HashSet<>();
         if (coverageMap.containsKey(targetStock)) {
-            coverageMap.get(targetStock).forEach((currentAnalyst) -> analystsCoveringTargetStocks.add(
+            coverageMap.get(targetStock).forEach((currentAnalyst) -> analystsCoveringTargetStock.add(
                     new ProfileDTO(currentAnalyst.getUsername(), currentAnalyst.getId())));
         }
 
-        if (analystsCoveringTargetStocks.isEmpty()) {
+        if (analystsCoveringTargetStock.isEmpty()) {
             ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok().body(analystsCoveringTargetStocks.stream().toList());
+        return ResponseEntity.ok().body(analystsCoveringTargetStock.stream().toList());
+    }
+
+    private List<ProfileDTO> createProfileList(List<User> users) {
+        List<ProfileDTO> profiles = new ArrayList<>();
+        users.forEach((currentUser) ->
+                profiles.add(new ProfileDTO(currentUser.getUsername(), currentUser.getId())));
+        return profiles;
+    }
+
+    private List<ProfileWithSubInfoForLoggedInUserDTO> getProfilesWithSubscribingFalse(List<ProfileDTO> searchResults) {
+        List<ProfileWithSubInfoForLoggedInUserDTO> profileListWithSubscribingFalseInfo = new ArrayList<>();
+
+        searchResults.forEach((currentResult) ->
+                profileListWithSubscribingFalseInfo.add(
+                        new ProfileWithSubInfoForLoggedInUserDTO(currentResult, false)));
+
+        return profileListWithSubscribingFalseInfo;
+    }
+
+    private List<ProfileWithSubInfoForLoggedInUserDTO> getProfilesWithSubInfo(List<ProfileDTO> searchResults, List<ProfileDTO> subscriptions) {
+        List<ProfileWithSubInfoForLoggedInUserDTO> profilesWithSubInfo = new ArrayList<>();
+        searchResults.forEach((currentResult) -> profilesWithSubInfo.add(new ProfileWithSubInfoForLoggedInUserDTO(
+                currentResult, subscriptions.contains(currentResult))));
+        return profilesWithSubInfo;
     }
 
 }

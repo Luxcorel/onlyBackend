@@ -3,11 +3,11 @@ package se.onlyfin.onlyfinbackend.controller;
 import lombok.NonNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import se.onlyfin.onlyfinbackend.model.FeedCard;
+import se.onlyfin.onlyfinbackend.DTO.DashboardWithLayoutDTO;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.model.dashboard_entity.*;
+import se.onlyfin.onlyfinbackend.repository.DashboardLayoutRepository;
 import se.onlyfin.onlyfinbackend.repository.DashboardRepository;
-import se.onlyfin.onlyfinbackend.repository.FeedCardRepository;
 import se.onlyfin.onlyfinbackend.repository.StockRefRepository;
 
 import java.time.Instant;
@@ -22,48 +22,46 @@ import java.util.Optional;
 public class DashboardController {
     private final DashboardRepository dashboardRepository;
     private final StockRefRepository stockRefRepository;
-    private final FeedCardRepository feedCardRepository;
+    private final DashboardLayoutRepository dashboardLayoutRepository;
 
-    public DashboardController(DashboardRepository dashboardRepository, StockRefRepository stockRefRepository, FeedCardRepository feedCardRepository) {
+    public DashboardController(DashboardRepository dashboardRepository,
+                               StockRefRepository stockRefRepository,
+                               DashboardLayoutRepository dashboardLayoutRepository) {
         this.dashboardRepository = dashboardRepository;
         this.stockRefRepository = stockRefRepository;
-        this.feedCardRepository = feedCardRepository;
+        this.dashboardLayoutRepository = dashboardLayoutRepository;
     }
 
     @GetMapping("/get/{id}")
-    public ResponseEntity<Dashboard> getDashboard(@PathVariable Integer id) {
+    public ResponseEntity<DashboardWithLayoutDTO> getDashboard(@PathVariable Integer id) {
         Optional<Dashboard> optionalDashboard = dashboardRepository.findById(id);
         Dashboard dashboard = optionalDashboard.orElse(null);
         if (dashboard == null) {
             System.out.println("is null");
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(dashboard);
+
+        List<DashboardLayout> layoutList = new ArrayList<>();
+
+        for (int i = 0; i < dashboard.getStocks().size(); i++) {
+            for (int j = 0; j < dashboard.getStocks().get(i).getCategories().size(); j++) {
+
+                int tempCategoryId = dashboard.getStocks().get(i).getCategories().get(j).getId();
+                List<DashboardLayout> tempList = dashboardLayoutRepository.findByCategoryId(tempCategoryId);
+                layoutList.addAll(tempList);
+            }
+        }
+
+        DashboardWithLayoutDTO dashboardToSend = new DashboardWithLayoutDTO(dashboard, layoutList);
+
+        return ResponseEntity.ok(dashboardToSend);
     }
 
     @GetMapping("/getStockRef")
-    public ResponseEntity<?> getStockRef() {
+    public ResponseEntity<List<StockRef>> getStockRef() {
         List<StockRef> stockRefs = stockRefRepository.findAll();
 
         return ResponseEntity.ok(stockRefs);
-    }
-
-    public Instant fetchAnalystsLastPostTime(@NonNull User targetAnalyst) {
-        Optional<FeedCard> latestInstantOptional = feedCardRepository.findLatestPostDateByAnalystUsername(targetAnalyst.getUsername());
-        if (latestInstantOptional.isPresent()) {
-            return latestInstantOptional.get().getPostDate();
-        } else {
-            return Instant.MIN;
-        }
-    }
-
-    public Instant fetchAnalystsLastUpdateTime(@NonNull User targetAnalyst) {
-        Optional<FeedCard> latestInstantOptional = feedCardRepository.findLatestUpdateDateByAnalystUsername(targetAnalyst.getUsername());
-        if (latestInstantOptional.isPresent()) {
-            return latestInstantOptional.get().getPostDate();
-        } else {
-            return Instant.MIN;
-        }
     }
 
     /**
@@ -82,7 +80,7 @@ public class DashboardController {
      * @param analysts analysts to include
      * @return map of stocks and who covers them
      */
-    public HashMap<StockRef, ArrayList<User>> fetchCoverageMap(List<User> analysts) {
+    public HashMap<StockRef, ArrayList<User>> createCoverageMap(List<User> analysts) {
         HashMap<StockRef, ArrayList<User>> coverageMap = new HashMap<>();
 
         ArrayList<User> analystList = new ArrayList<>(analysts);

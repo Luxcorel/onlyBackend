@@ -1,6 +1,5 @@
 package se.onlyfin.onlyfinbackend.controller;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -45,16 +44,12 @@ public class UserController {
     public ResponseEntity<User> fetchUserDebug(Principal principal, @RequestParam(required = false) String username) {
         if (!username.isEmpty()) {
             User targetUser = userService.getUserOrNull(username);
-            if (targetUser != null) {
-                return ResponseEntity.ok().body(targetUser);
-            }
+            return ResponseEntity.ok().body(targetUser);
         }
 
         if (principal != null) {
-            User targetUser = userService.getUserOrNull(principal.getName());
-            if (targetUser != null) {
-                return ResponseEntity.ok().body(targetUser);
-            }
+            User fetchingUser = userService.getUserOrException(principal.getName());
+            return ResponseEntity.ok().body(fetchingUser);
         }
 
         return ResponseEntity.badRequest().build();
@@ -95,13 +90,18 @@ public class UserController {
     }
 
     /**
+     * WARNING DISABLED AS IT COULD CAUSE SIDE EFFECTS
      * Makes an analyst a regular user. If the user is not an analyst, a bad request is returned.
      *
      * @param principal Logged-in analyst that wants to become a regular user.
      * @return ResponseEntity with status code 200 if the analyst was successfully made a regular user.
      */
+    @Deprecated
     @PutMapping("/disable-analyst")
-    public ResponseEntity<String> disableAnalyst(Principal principal) {
+    public ResponseEntity<String> disableAnalyst(Principal principal) throws Exception {
+        if (true) {
+            throw new Exception();
+        }
         User targetUser = userService.getUserOrException(principal.getName());
         boolean succeeded = userService.disableAnalyst(targetUser);
 
@@ -121,8 +121,8 @@ public class UserController {
     @GetMapping("/fetch-current-user-id")
     public ResponseEntity<Integer> fetchCurrentUserId(Principal principal) {
         User targetUser = userService.getUserOrException(principal.getName());
-        Integer userId = targetUser.getId();
 
+        Integer userId = targetUser.getId();
         return ResponseEntity.ok().body(userId);
     }
 
@@ -134,10 +134,13 @@ public class UserController {
      */
     @GetMapping("/fetch-about-me")
     public ResponseEntity<String> fetchAboutMeFor(@RequestParam String username) {
-        User userToGetAboutMeFrom = userService.getUserOrException(username);
-        String aboutMeText = userToGetAboutMeFrom.getAboutMe();
+        User targetUser = userService.getUserOrNull(username);
+        if (targetUser == null) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        return ResponseEntity.ok().body(aboutMeText);
+        String aboutMe = targetUser.getAboutMe();
+        return ResponseEntity.ok().body(aboutMe);
     }
 
     /**
@@ -150,15 +153,15 @@ public class UserController {
     public ResponseEntity<AboutMeDTO> fetchAboutMeWithSubInfoFor(@RequestParam String username, Principal principal) {
         User fetchingUser = userService.getUserOrException(principal.getName());
 
-        User userToGetAboutMeFrom = userService.getUserOrNull(username);
-        if (userToGetAboutMeFrom == null) {
+        User targetUser = userService.getUserOrNull(username);
+        if (targetUser == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        boolean subscribed = subscriptionController.isUserSubscribedToThisUser(fetchingUser, userToGetAboutMeFrom);
-        AboutMeDTO aboutMeDTO = new AboutMeDTO(userToGetAboutMeFrom.getAboutMe(), subscribed);
+        boolean isSubscribed = subscriptionController.isUserSubscribedToThisUser(fetchingUser, targetUser);
+        AboutMeDTO aboutMe = new AboutMeDTO(targetUser.getAboutMe(), isSubscribed);
 
-        return ResponseEntity.ok().body(aboutMeDTO);
+        return ResponseEntity.ok().body(aboutMe);
     }
 
     /**
@@ -174,9 +177,9 @@ public class UserController {
             return ResponseEntity.badRequest().build();
         }
 
-        User userWantingToUpdateAboutMe = userService.getUserOrException(principal.getName());
-        userWantingToUpdateAboutMe.setAboutMe(aboutMeUpdateDTO.text());
-        userService.updateUser(userWantingToUpdateAboutMe);
+        User actingUser = userService.getUserOrException(principal.getName());
+        actingUser.setAboutMe(aboutMeUpdateDTO.text());
+        userService.updateUser(actingUser);
 
         return ResponseEntity.ok().body(aboutMeUpdateDTO.text());
     }
@@ -189,9 +192,9 @@ public class UserController {
      */
     @GetMapping("/principal-username")
     public ResponseEntity<String> fetchUsernameOfPrincipal(Principal principal) {
-        User userToGetUsernameOf = userService.getUserOrException(principal.getName());
+        String username = principal.getName();
 
-        return ResponseEntity.ok().body(userToGetUsernameOf.getUsername());
+        return ResponseEntity.ok().body(username);
     }
 
     /**
@@ -202,9 +205,9 @@ public class UserController {
      */
     @GetMapping("/principal-id")
     public ResponseEntity<Integer> fetchUserIdOfPrincipal(Principal principal) {
-        User userToGetUserIdOf = userService.getUserOrException(principal.getName());
+        User fetchingUser = userService.getUserOrException(principal.getName());
 
-        return ResponseEntity.ok().body(userToGetUserIdOf.getId());
+        return ResponseEntity.ok().body(fetchingUser.getId());
     }
 
     /**
@@ -221,11 +224,27 @@ public class UserController {
 
         boolean succeeded = userService.passwordChange(userToChangePassword, passwordUpdateDTO.oldPassword(), passwordUpdateDTO.newPassword());
 
-        if (succeeded) {
-            return ResponseEntity.ok().body("Updated password");
-        } else {
+        if (!succeeded) {
             return ResponseEntity.badRequest().body("Password does not match");
         }
+
+        return ResponseEntity.ok().body("Updated password");
+    }
+
+    /**
+     * Returns the username of the user with the given id.
+     *
+     * @param id The id of the user
+     * @return The username of the user with the given id if the user exists, otherwise a bad request.
+     */
+    @GetMapping("/getNameFromUserId/{id}")
+    public ResponseEntity<String> getUsernameFromUserId(@PathVariable Integer id) {
+        User targetUser = userService.getUserOrNull(id);
+        if (targetUser == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok().body(targetUser.getUsername());
     }
 
 }

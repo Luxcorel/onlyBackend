@@ -60,16 +60,6 @@ public class StockReferenceController {
     }
 
     /**
-     * Fetches all stock references starting with stock name
-     *
-     * @param stockName the target stock name
-     * @return list of stockRefs matching the target stock name
-     */
-    public List<StockRef> fetchStockReferencesUsingName(String stockName) {
-        return new ArrayList<>(stockRefRepository.findTop7StockRefsByNameIgnoreCaseStartingWith(stockName));
-    }
-
-    /**
      * Finds one stockRef using its exact name
      *
      * @param stockName the target's exact name

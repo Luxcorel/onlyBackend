@@ -45,7 +45,9 @@ public class SecurityConfig {
                                 "/plz",
                                 "/login",
                                 "/assets/**",
-                                "/dashboard/get/**"
+                                "/dashboard/get/**",
+                                "/getNameFromUserId/**",
+                                "/tests/**"
                         )
                         .permitAll()
                         .requestMatchers(
@@ -79,12 +81,15 @@ public class SecurityConfig {
                                 "/find-analysts-that-cover-stock",
                                 "/reviews/**",
                                 "/error",
-                                "/password-update"
+                                "/password-update",
+                                "/subscriptions/get-my-subscribe-count",
+                                "/subscriptions/get-subscribe-count",
+                                "/subscriptions/is-user-subscribed-to"
                         )
                         .hasRole("USER")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         //uncomment the row below to enable user debug:
-                        .requestMatchers("/user-debug").permitAll()
+                        //.requestMatchers("/user-debug").permitAll()
                 )
                 .formLogin()
                 .loginProcessingUrl("/plz")

@@ -28,4 +28,18 @@ public interface AnalystReviewRepository extends JpaRepository<AnalystReview, In
      */
     void deleteByTargetUserAndAuthorUsername(User targetUser, String username);
 
+    /**
+     * Deletes all analyst reviews by the target user.
+     *
+     * @param targetUsername the target user's username
+     */
+    void deleteAllByAuthorUsername(String targetUsername);
+
+    /**
+     * Deletes all analyst reviews for the target user.
+     *
+     * @param targetUser the target user
+     */
+    void deleteAllByTargetUser(User targetUser);
+
 }

@@ -7,12 +7,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import se.onlyfin.onlyfinbackend.DTO.ProfileDTO;
 import se.onlyfin.onlyfinbackend.DTO.UserDTO;
 import se.onlyfin.onlyfinbackend.model.User;
 import se.onlyfin.onlyfinbackend.repository.UserRepository;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * This class is responsible for handling operations regarding user entities.
@@ -28,7 +28,8 @@ public class UserService {
     }
 
     /**
-     * Returns a user with the given username if it exists else throws an exception.
+     * Returns a user with the given username if it exists.
+     * Else throws a UsernameNotFound exception which causes a redirect to the login page to occur
      *
      * @param username The username of the user to be returned.
      * @return The user with the given username if it exists.
@@ -193,4 +194,35 @@ public class UserService {
     public List<User> findAnalystWithUsernameStartingWith(String search) {
         return userRepository.findTop7ByisAnalystIsTrueAndUsernameStartsWith(search);
     }
+
+    /**
+     * @param usernames The usernames of the profiles to be returned.
+     * @return A set of profiles with the given usernames.
+     */
+    public Set<ProfileDTO> getProfilesFromUsernames(List<String> usernames) {
+        Set<ProfileDTO> profiles = new HashSet<>();
+
+        for (String username : usernames) {
+            User userOrNull = getUserOrNull(username);
+            if (userOrNull != null) {
+                profiles.add(new ProfileDTO(userOrNull.getUsername(), userOrNull.getId()));
+            }
+        }
+
+        return profiles;
+    }
+
+    /**
+     * TEST METHOD: ONLY USE THIS METHOD FOR TESTING PURPOSES AS THERE MAY BE SIDE EFFECTS WHEN DELETING USERS
+     *
+     * @param targetUser The user to be deleted.
+     */
+    @Deprecated
+    public void deleteUser(User targetUser) {
+        if (targetUser != null) {
+            userRepository.delete(targetUser);
+        }
+    }
+
+
 }
