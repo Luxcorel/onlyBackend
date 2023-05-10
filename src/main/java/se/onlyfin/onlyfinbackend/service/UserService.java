@@ -90,7 +90,7 @@ public class UserService {
             userToRegister.setEmail(userDTO.email());
             userToRegister.setEnabled(true);
             userToRegister.setRoles("ROLE_USER");
-            userToRegister.setAnalyst(false);
+            userToRegister.setAnalyst(true);
             return userRepository.save(userToRegister);
         } else {
             return null;
