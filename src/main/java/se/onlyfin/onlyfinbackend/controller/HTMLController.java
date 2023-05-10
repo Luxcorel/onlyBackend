@@ -11,7 +11,7 @@ import java.security.Principal;
 /**
  * This class is responsible for handling all HTML page endpoints.
  */
-@CrossOrigin(origins = "https://onlyfrontend-production.up.railway.app", allowCredentials = "true")
+@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
 @Controller
 public class HTMLController {
 
