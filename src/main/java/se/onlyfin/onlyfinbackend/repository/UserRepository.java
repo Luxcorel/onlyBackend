@@ -32,7 +32,7 @@ public interface UserRepository extends CrudRepository<User, Integer> {
      * @param username the username of the user
      * @return true if the user exists
      */
-    boolean existsByUsername(String username);
+    boolean existsByUsernameIgnoreCase(String username);
 
     /**
      * Check if any user exists by email
@@ -79,5 +79,5 @@ public interface UserRepository extends CrudRepository<User, Integer> {
      * @param search the search term
      * @return up to 7 analysts that start with the given search term
      */
-    List<User> findTop7ByisAnalystIsTrueAndUsernameStartsWith(String search);
+    List<User> findTop7ByisAnalystIsTrueAndUsernameIgnoreCaseStartsWith(String search);
 }

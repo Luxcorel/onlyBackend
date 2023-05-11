@@ -72,7 +72,7 @@ public class UserService {
      * @return True if the user is registrable else false.
      */
     public boolean registrable(@Valid UserDTO user) {
-        return !userRepository.existsByEmail(user.email()) && !userRepository.existsByUsername(user.username());
+        return !userRepository.existsByEmail(user.email()) && !userRepository.existsByUsernameIgnoreCase(user.username());
     }
 
     /**
@@ -90,7 +90,7 @@ public class UserService {
             userToRegister.setEmail(userDTO.email());
             userToRegister.setEnabled(true);
             userToRegister.setRoles("ROLE_USER");
-            userToRegister.setAnalyst(true);
+            userToRegister.setAnalyst(false);
             return userRepository.save(userToRegister);
         } else {
             return null;
@@ -192,7 +192,7 @@ public class UserService {
      * @return A list of analysts with usernames starting with the given search string.
      */
     public List<User> findAnalystWithUsernameStartingWith(String search) {
-        return userRepository.findTop7ByisAnalystIsTrueAndUsernameStartsWith(search);
+        return userRepository.findTop7ByisAnalystIsTrueAndUsernameIgnoreCaseStartsWith(search);
     }
 
     /**
