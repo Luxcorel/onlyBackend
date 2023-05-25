@@ -3,7 +3,7 @@ package se.onlyfin.onlyfinbackend.model;
 import jakarta.persistence.*;
 
 /**
- * This class represents a review of an analyst.
+ * This class represents the analyst review table in the database.
  */
 @Entity
 @Table(name = "analyst_review")

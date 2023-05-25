@@ -3,7 +3,7 @@ package se.onlyfin.onlyfinbackend.DTO;
 import jakarta.validation.constraints.Email;
 
 /**
- * This DTO is responsible for containing the user registration forms data.
+ * DTO used for sending user registration form data.
  *
  * @param email    the email of the user
  * @param username the username of the user

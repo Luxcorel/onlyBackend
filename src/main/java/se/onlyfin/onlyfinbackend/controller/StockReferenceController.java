@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This class is responsible for handling requests related to stock references.
+ */
 @RequestMapping("/stonks")
 @RestController
 @CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
@@ -60,7 +63,7 @@ public class StockReferenceController {
     }
 
     /**
-     * Finds one stockRef using its exact name
+     * Finds one stock reference using its exact name
      *
      * @param stockName the target's exact name
      * @return target stock if found

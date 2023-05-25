@@ -5,12 +5,14 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class represents the category table in the database.
+ */
 @Entity
 @Table(name = "category")
 public class Category {
 
     public Category() {
-
     }
 
     public Category(int id) {

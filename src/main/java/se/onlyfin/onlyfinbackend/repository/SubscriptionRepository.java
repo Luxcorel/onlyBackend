@@ -66,6 +66,11 @@ public interface SubscriptionRepository extends CrudRepository<Subscription, Int
      */
     void deleteAllBySubscribedTo(User targetUser);
 
+    /**
+     * Finds the 7 most subscribed-to users
+     *
+     * @return the 7 most subscribed-to users
+     */
     @Query("SELECT subscription.subscriber.username " +
             "FROM Subscription subscription " +
             "GROUP BY subscription.subscriber.username " +

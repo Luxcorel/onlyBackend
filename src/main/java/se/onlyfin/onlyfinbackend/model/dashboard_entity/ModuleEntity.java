@@ -7,6 +7,9 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
+/**
+ * This class represents the module table in the database.
+ */
 @Entity
 @Table(name = "module")
 public class ModuleEntity {
@@ -80,6 +83,14 @@ public class ModuleEntity {
 
     public void setUpdatedDate(Instant updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public void setCategoryId(Category categoryId) {
+        this.category_id = categoryId;
+    }
+
+    public void setModuleType(String moduleType) {
+        this.module_type = module_type;
     }
 
     @Override

@@ -29,7 +29,8 @@ public class UserSuggestionAlgorithm {
     private final FeedCardRepository feedCardRepository;
     private final SubscriptionController subscriptionController;
 
-    public UserSuggestionAlgorithm(DashboardController dashboardController, UserService userService, FeedCardRepository feedCardRepository, SubscriptionController subscriptionController) {
+    public UserSuggestionAlgorithm(DashboardController dashboardController, UserService userService,
+                                   FeedCardRepository feedCardRepository, SubscriptionController subscriptionController) {
         this.dashboardController = dashboardController;
         this.userService = userService;
         this.feedCardRepository = feedCardRepository;
@@ -40,20 +41,35 @@ public class UserSuggestionAlgorithm {
      * This algorithm returns user profiles that the logged-in user could be interested in.
      * Tries to give the user a list that includes the most active non-subscribed analysts for all stocks the user's
      * subscriptions have.
-     * A limitation with this algorithm is that it can't recommend anything if the user isn't subscribed to anyone,
-     * and it can't recommend analysts that don't cover at least one stock that the user's subscriptions cover.
+     * If the user isn't subscribed to anyone, a list of the top most subscribed to users will be returned.
+     * A limitation with this algorithm is that it can't recommend analysts that don't cover at least one stock
+     * that the user's subscriptions cover.
      *
      * @param principal the logged-in user
      * @return No-content if no suggestions can be made or List if suggestions can be made
      */
     @GetMapping("/by-stocks-covered-weighed-by-post-amount")
-    public ResponseEntity<List<UserRecommendationStringDTO>> byStocksCoveredWeighedByPostAmount(Principal principal) {
+    public ResponseEntity<Set<UserRecommendationStringDTO>> byStocksCoveredWeighedByPostAmount(Principal principal) {
         User fetchingUser = userService.getUserOrException(principal.getName());
 
         //subscription objects
         List<Subscription> subscriptions = new ArrayList<>(fetchingUser.getSubscriptions());
         if (subscriptions.isEmpty()) {
-            return ResponseEntity.noContent().build();
+            List<String> mostSubscribedUsernames = subscriptionController.getMostSubscribedUsernames();
+            mostSubscribedUsernames.remove(fetchingUser.getUsername());
+
+            Set<ProfileDTO> profiles = userService.getProfilesFromUsernames(mostSubscribedUsernames);
+
+            Set<UserRecommendationStringDTO> recommendations = new HashSet<>();
+            for (ProfileDTO profile : profiles) {
+                recommendations.add(new UserRecommendationStringDTO("Popular user", profile));
+            }
+
+            if (recommendations.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+
+            return ResponseEntity.ok().body(recommendations);
         }
 
         //all subscriptions
@@ -130,7 +146,7 @@ public class UserSuggestionAlgorithm {
             return ResponseEntity.noContent().build();
         }
 
-        return ResponseEntity.ok().body(suggestions.stream().toList());
+        return ResponseEntity.ok().body(suggestions);
     }
 
     /**
@@ -143,7 +159,7 @@ public class UserSuggestionAlgorithm {
     public ResponseEntity<Set<ProfileDTO>> byTop7SubscriptionCount(Principal principal) {
         User fetchingUser = userService.getUserOrException(principal.getName());
 
-        List<String> top7MostSubscribedUsernames = subscriptionController.getTop7MostSubscribedUsernames();
+        List<String> top7MostSubscribedUsernames = subscriptionController.getMostSubscribedUsernames();
         top7MostSubscribedUsernames.remove(fetchingUser.getUsername());
 
         Set<ProfileDTO> profiles = userService.getProfilesFromUsernames(top7MostSubscribedUsernames);

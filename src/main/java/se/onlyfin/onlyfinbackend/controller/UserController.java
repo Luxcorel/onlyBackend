@@ -151,13 +151,18 @@ public class UserController {
      */
     @GetMapping("/fetch-about-me-with-sub-info")
     public ResponseEntity<AboutMeDTO> fetchAboutMeWithSubInfoFor(@RequestParam String username, Principal principal) {
-        User fetchingUser = userService.getUserOrException(principal.getName());
-
         User targetUser = userService.getUserOrNull(username);
         if (targetUser == null) {
             return ResponseEntity.badRequest().build();
         }
 
+        boolean notLoggedIn = (principal == null);
+        if (notLoggedIn) {
+            AboutMeDTO aboutMe = new AboutMeDTO(targetUser.getAboutMe(), false);
+            return ResponseEntity.ok().body(aboutMe);
+        }
+
+        User fetchingUser = userService.getUserOrException(principal.getName());
         boolean isSubscribed = subscriptionController.isUserSubscribedToThisUser(fetchingUser, targetUser);
         AboutMeDTO aboutMe = new AboutMeDTO(targetUser.getAboutMe(), isSubscribed);
 

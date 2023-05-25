@@ -1,21 +1,25 @@
 package se.onlyfin.onlyfinbackend.controller;
 
-import lombok.NonNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.onlyfin.onlyfinbackend.DTO.DashboardWithLayoutDTO;
 import se.onlyfin.onlyfinbackend.model.User;
-import se.onlyfin.onlyfinbackend.model.dashboard_entity.*;
+import se.onlyfin.onlyfinbackend.model.dashboard_entity.Dashboard;
+import se.onlyfin.onlyfinbackend.model.dashboard_entity.DashboardLayout;
+import se.onlyfin.onlyfinbackend.model.dashboard_entity.Stock;
+import se.onlyfin.onlyfinbackend.model.dashboard_entity.StockRef;
 import se.onlyfin.onlyfinbackend.repository.DashboardLayoutRepository;
 import se.onlyfin.onlyfinbackend.repository.DashboardRepository;
 import se.onlyfin.onlyfinbackend.repository.StockRefRepository;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This class is responsible for providing access to dashboards.
+ */
 @RestController
 @RequestMapping("/dashboard")
 @CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
@@ -32,6 +36,12 @@ public class DashboardController {
         this.dashboardLayoutRepository = dashboardLayoutRepository;
     }
 
+    /**
+     * Fetches a dashboard with layout using a target id
+     *
+     * @param id target dashboard's id
+     * @return dashboard with layout
+     */
     @GetMapping("/get/{id}")
     public ResponseEntity<DashboardWithLayoutDTO> getDashboard(@PathVariable Integer id) {
         Optional<Dashboard> optionalDashboard = dashboardRepository.findById(id);
@@ -57,6 +67,11 @@ public class DashboardController {
         return ResponseEntity.ok(dashboardToSend);
     }
 
+    /**
+     * Returns a list of all stock references.
+     *
+     * @return list of all stock references
+     */
     @GetMapping("/getStockRef")
     public ResponseEntity<List<StockRef>> getStockRef() {
         List<StockRef> stockRefs = stockRefRepository.findAll();
@@ -102,65 +117,6 @@ public class DashboardController {
         }
 
         return coverageMap;
-    }
-
-    /**
-     * This method goes through all the analyst's posts and returns whichever Instant is the latest update date
-     *
-     * @param targetAnalyst the analysts to target
-     * @return Instant object containing time&date information about the last post update date
-     */
-    @Deprecated
-    public Instant oldFetchAnalystsLastUpdateTime(@NonNull User targetAnalyst) {
-        Dashboard targetAnalystsDashboard = fetchDashboardOrNull(targetAnalyst.getId());
-        if (targetAnalystsDashboard == null) {
-            return Instant.MIN;
-        }
-
-        List<Stock> analystsStocks = targetAnalystsDashboard.getStocks();
-        Instant latestInstant = Instant.MIN;
-        for (Stock currentStock : analystsStocks) {
-            for (Category currentCategoryUnderStock : currentStock.getCategories()) {
-                for (ModuleEntity currentModuleUnderCategory : currentCategoryUnderStock.getModuleEntities()) {
-                    Instant currentInstant = currentModuleUnderCategory.getUpdatedDate();
-                    if (currentInstant.isAfter(latestInstant)) {
-                        latestInstant = currentInstant;
-                    }
-                }
-            }
-        }
-
-        return latestInstant;
-    }
-
-    /**
-     * This method goes through all the analyst's posts and returns whichever Instant is the latest date
-     *
-     * @param targetAnalyst the analysts to target
-     * @return Instant object containing time&date information about the last post date
-     */
-    @Deprecated
-    public Instant oldFetchAnalystsLastPostTime(@NonNull User targetAnalyst) {
-        Optional<Dashboard> optionalTargetAnalystsDashboard = dashboardRepository.findById(targetAnalyst.getId());
-        if (optionalTargetAnalystsDashboard.isEmpty()) {
-            return Instant.MIN;
-        }
-
-        Dashboard targetAnalystsDashboard = optionalTargetAnalystsDashboard.get();
-        List<Stock> analystsStocks = targetAnalystsDashboard.getStocks();
-        Instant latestInstant = Instant.MIN;
-        for (Stock currentStock : analystsStocks) {
-            for (Category currentCategoryUnderStock : currentStock.getCategories()) {
-                for (ModuleEntity currentModuleUnderCategory : currentCategoryUnderStock.getModuleEntities()) {
-                    Instant currentInstant = currentModuleUnderCategory.getPostDate();
-                    if (currentInstant.isAfter(latestInstant)) {
-                        latestInstant = currentInstant;
-                    }
-                }
-            }
-        }
-
-        return latestInstant;
     }
 
 }

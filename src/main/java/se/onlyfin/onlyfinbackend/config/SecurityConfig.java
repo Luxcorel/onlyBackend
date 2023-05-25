@@ -5,12 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import se.onlyfin.onlyfinbackend.service.OnlyfinUserDetailsService;
@@ -47,7 +49,12 @@ public class SecurityConfig {
                                 "/assets/**",
                                 "/dashboard/get/**",
                                 "/getNameFromUserId/**",
-                                "/tests/**"
+                                //"/tests/**",
+                                "/search-analyst-include-sub-info",
+                                "/search-all-analysts-include-sub-info",
+                                "/reviews/fetch-all",
+                                "/fetch-about-me",
+                                "/fetch-about-me-with-sub-info"
                         )
                         .permitAll()
                         .requestMatchers(
@@ -60,7 +67,6 @@ public class SecurityConfig {
                                 "/enable-analyst",
                                 "/disable-analyst",
                                 "/fetch-current-user-id",
-                                "/fetch-about-me",
                                 "/update-about-me",
                                 "/dashboard/**",
                                 "/studio/**",
@@ -72,9 +78,6 @@ public class SecurityConfig {
                                 "/feed/**",
                                 "/fetch-current-user-subscriptions",
                                 "/stonks/**",
-                                "/search-analyst-include-sub-info",
-                                "/search-all-analysts-include-sub-info",
-                                "/fetch-about-me-with-sub-info",
                                 "/user-subscription-list-sorted-by-postdate",
                                 "/user-subscription-list-sorted-by-update-date",
                                 "/algo/**",
@@ -89,12 +92,15 @@ public class SecurityConfig {
                         .hasRole("USER")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         //uncomment the row below to enable user debug:
-                        .requestMatchers("/user-debug").permitAll()
+                        //.requestMatchers("/user-debug").permitAll()
                 )
                 .formLogin()
                 .loginProcessingUrl("/plz")
                 .successHandler(new LoginSuccessHandlerDoNothingImpl())
-                .failureHandler(new LoginFailureHandlerDoNothingImpl());
+                .failureHandler(new LoginFailureHandlerDoNothingImpl())
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
         return http.build();
     }
 

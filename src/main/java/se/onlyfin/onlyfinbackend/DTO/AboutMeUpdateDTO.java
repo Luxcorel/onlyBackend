@@ -1,7 +1,7 @@
 package se.onlyfin.onlyfinbackend.DTO;
 
 /**
- * This DTO holds information about an "about me" update request
+ * DTO used for "about me" update request.
  *
  * @param text the updated text
  */

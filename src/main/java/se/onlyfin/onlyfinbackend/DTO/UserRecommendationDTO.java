@@ -5,11 +5,13 @@ import se.onlyfin.onlyfinbackend.model.dashboard_entity.StockRef;
 import java.util.Objects;
 
 /**
- * This DTO is responsible for representing a recommendation of an analyst.
- * It contains the common stock that were the reason for the recommendation and the profile of the analyst.
+ * DTO used for sending a recommendation of an analyst.
+ * It contains the common stock that were the reason for the recommendation and the profile of the suggested analyst.
+ * Overridden equal & hashcode so that only the profile object is subject to comparison.
+ * This is the case as recommendations of the same user should be interpreted as the same.
  *
- * @param stock
- * @param profileDTO
+ * @param stock      stock that analyst was recommended for covering
+ * @param profileDTO profile of the recommended analyst
  */
 public record UserRecommendationDTO(StockRef stock, ProfileDTO profileDTO) {
     @Override

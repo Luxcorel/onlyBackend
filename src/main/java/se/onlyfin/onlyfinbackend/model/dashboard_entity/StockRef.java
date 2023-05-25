@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class represents the stock reference table in the database.
+ */
 @Entity
 @Table(name = "stock_ref")
 public class StockRef {

@@ -8,7 +8,7 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 
 /**
- * This class represents a feed card in the database.
+ * This class represents the feed card table in the database.
  */
 @Entity
 @Table(name = "feed_card")

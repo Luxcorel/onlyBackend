@@ -3,7 +3,7 @@ package se.onlyfin.onlyfinbackend.DTO;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * DTO for a card in the feed.
+ * DTO used for fetching a "feed card" in the feed page.
  *
  * @param posterOfContent the user who posted the content
  * @param stock           the stock that the content is about

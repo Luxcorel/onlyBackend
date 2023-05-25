@@ -1,5 +1,6 @@
 package se.onlyfin.onlyfinbackend.controller;
 
+import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -267,12 +268,18 @@ public class SubscriptionController {
      *
      * @param targetUser the target user
      */
+    @Transactional
     public void removeAllSubscriptionsRelatedToUser(User targetUser) {
         subscriptionRepository.deleteAllBySubscriber(targetUser);
         subscriptionRepository.deleteAllBySubscribedTo(targetUser);
     }
 
-    public List<String> getTop7MostSubscribedUsernames() {
+    /**
+     * Fetches the usernames of the top 7 most subscribed to analysts
+     *
+     * @return the usernames of the top 7 most subscribed-to analysts
+     */
+    public List<String> getMostSubscribedUsernames() {
         return subscriptionRepository.find7MostSubscribedUsernames();
     }
 

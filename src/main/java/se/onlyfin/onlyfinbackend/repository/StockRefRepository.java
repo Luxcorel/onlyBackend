@@ -6,6 +6,9 @@ import se.onlyfin.onlyfinbackend.model.dashboard_entity.StockRef;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository mapping for the stock reference table.
+ */
 public interface StockRefRepository extends JpaRepository<StockRef, Integer> {
 
     /**

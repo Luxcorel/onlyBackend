@@ -7,12 +7,14 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class represents the stock table in the database.
+ */
 @Entity
 @Table(name = "stock")
 public class Stock {
 
     public Stock() {
-
     }
 
     public Stock(int id) {

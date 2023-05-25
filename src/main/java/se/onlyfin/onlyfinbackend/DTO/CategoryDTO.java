@@ -1,7 +1,7 @@
 package se.onlyfin.onlyfinbackend.DTO;
 
 /**
- * This DTO is responsible for holding data about a category
+ * DTO used for fetching a category.
  *
  * @param name name of category
  * @param id   id of category

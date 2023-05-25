@@ -28,6 +28,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * This class is responsible for handling requests related to the feed.
+ */
 @RestController
 @RequestMapping("/feed")
 @CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
@@ -144,7 +147,6 @@ public class FeedController {
      * @param principal the user that is logged in
      * @return a list of feed cards
      */
-    @GetMapping("/old-all-the-things")
     @Deprecated
     public ResponseEntity<List<FeedCardDTO>> fetchAllTheFeed(Principal principal) {
         //check that logged-in user exists
@@ -192,7 +194,6 @@ public class FeedController {
      * @param principal the user that is logged in
      * @return a list of feed cards from the last 7 days
      */
-    @GetMapping("/oldweek")
     @Deprecated
     public ResponseEntity<List<FeedCardDTO>> fetchWeeklyFeed(Principal principal) {
         //check that logged-in user exists
@@ -373,6 +374,13 @@ public class FeedController {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Fetches an analysts latest post-time.
+     * If no posts exist Instant.Min is returned instead.
+     *
+     * @param targetAnalyst the target analyst
+     * @return Instant object of the latest post time
+     */
     public Instant fetchAnalystsLastPostTime(@NonNull User targetAnalyst) {
         Optional<FeedCard> latestInstantOptional = feedCardRepository.findFirstByAnalystUsernameOrderByPostDateDesc(targetAnalyst.getUsername());
         if (latestInstantOptional.isPresent()) {
@@ -382,6 +390,13 @@ public class FeedController {
         }
     }
 
+    /**
+     * Fetches an analysts latest post update-time.
+     * If no posts have been updated Instant.Min is returned instead.
+     *
+     * @param targetAnalyst the target analyst
+     * @return Instant object of the latest update time
+     */
     public Instant fetchAnalystsLastUpdateTime(@NonNull User targetAnalyst) {
         Optional<FeedCard> latestInstantOptional = feedCardRepository.findFirstByAnalystUsernameOrderByUpdatedDateDesc(targetAnalyst.getUsername());
         if (latestInstantOptional.isPresent()) {

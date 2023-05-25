@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This class is responsible for modeling the user table in the database.
+ * This class represents the user table in the database.
  */
 @Entity
 @Table(name = "users")

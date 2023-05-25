@@ -2,6 +2,12 @@ package se.onlyfin.onlyfinbackend.DTO;
 
 import java.util.Objects;
 
+/**
+ * Variation of the {@link UserRecommendationDTO} with just the stock name instead of a complete stock object.
+ *
+ * @param stock      name of stock that the suggested analyst was recommended for covering
+ * @param profileDTO profile of suggested analyst
+ */
 public record UserRecommendationStringDTO(String stock, ProfileDTO profileDTO) {
     @Override
     public boolean equals(Object o) {

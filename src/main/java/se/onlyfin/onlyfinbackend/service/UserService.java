@@ -90,7 +90,7 @@ public class UserService {
             userToRegister.setEmail(userDTO.email());
             userToRegister.setEnabled(true);
             userToRegister.setRoles("ROLE_USER");
-            userToRegister.setAnalyst(false);
+            userToRegister.setAnalyst(true);
             return userRepository.save(userToRegister);
         } else {
             return null;
@@ -168,11 +168,24 @@ public class UserService {
     }
 
     /**
-     *
      * @return A list of all analysts.
      */
     public List<User> getAllAnalysts() {
         return userRepository.findByisAnalystIsTrue();
+    }
+
+    /**
+     * @return A list of all analysts as profiles
+     */
+    public List<ProfileDTO> getAllAnalystsAsProfiles() {
+        List<ProfileDTO> profiles = new ArrayList<>();
+
+        List<User> analysts = userRepository.findByisAnalystIsTrue();
+        for (User analyst : analysts) {
+            profiles.add(new ProfileDTO(analyst.getUsername(), analyst.getId()));
+        }
+
+        return profiles;
     }
 
     /**
@@ -192,7 +205,7 @@ public class UserService {
      * @return A list of analysts with usernames starting with the given search string.
      */
     public List<User> findAnalystWithUsernameStartingWith(String search) {
-        return userRepository.findTop7ByisAnalystIsTrueAndUsernameIgnoreCaseStartsWith(search);
+        return userRepository.findByisAnalystIsTrueAndUsernameIgnoreCaseStartsWith(search);
     }
 
     /**

@@ -43,14 +43,6 @@ public interface UserRepository extends CrudRepository<User, Integer> {
     boolean existsByEmail(String email);
 
     /**
-     * Delete any user by email
-     *
-     * @param email the email of the user
-     * @return true if the user was deleted
-     */
-    boolean deleteByEmail(String email);
-
-    /**
      * Find all users that are analysts
      *
      * @return all users that are analysts
@@ -66,18 +58,10 @@ public interface UserRepository extends CrudRepository<User, Integer> {
     Optional<User> findByisAnalystIsTrueAndUsernameEquals(String username);
 
     /**
-     * Find all analysts that start with the given search term
-     *
-     * @param search the search term
-     * @return all analysts that start with the given search term
-     */
-    List<User> findByisAnalystIsTrueAndUsernameStartsWith(String search);
-
-    /**
      * Find the most recent 7 analysts whose username starts with the given search term
      *
      * @param search the search term
      * @return up to 7 analysts that start with the given search term
      */
-    List<User> findTop7ByisAnalystIsTrueAndUsernameIgnoreCaseStartsWith(String search);
+    List<User> findByisAnalystIsTrueAndUsernameIgnoreCaseStartsWith(String search);
 }
