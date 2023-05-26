@@ -122,7 +122,7 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("/**").allowedOrigins("https://onlyfrontend-production.up.railway.app","https://onlyfin.se").allowCredentials(true);
+                registry.addMapping("/**").allowedOrigins("https://onlyfrontend-production.up.railway.app","https://beta.onlyfin.se").allowCredentials(true);
             }
         };
     }

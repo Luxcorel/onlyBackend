@@ -17,7 +17,7 @@ import java.security.Principal;
 /**
  * This class is responsible for handling requests related to user management.
  */
-@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
+@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://beta.onlyfin.se"}, allowCredentials = "true")
 @Controller
 public class UserController {
     private final SubscriptionController subscriptionController;

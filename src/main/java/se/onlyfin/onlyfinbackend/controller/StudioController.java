@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * This class is responsible for handling requests related to the graph creation studio.
  */
-@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
+@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://beta.onlyfin.se"}, allowCredentials = "true")
 @RestController
 @RequestMapping("/studio")
 public class StudioController {

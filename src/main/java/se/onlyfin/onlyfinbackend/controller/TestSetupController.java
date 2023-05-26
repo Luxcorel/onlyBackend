@@ -23,7 +23,7 @@ import se.onlyfin.onlyfinbackend.service.UserService;
  */
 @RestController
 @RequestMapping("/tests")
-@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
+@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://beta.onlyfin.se"}, allowCredentials = "true")
 public class TestSetupController {
     private static final String TEST_PRODUCER_USERNAME = "TEST_PROD";
     private static final String TEST_PRODUCER_PASSWORD = "TEST_PROD";

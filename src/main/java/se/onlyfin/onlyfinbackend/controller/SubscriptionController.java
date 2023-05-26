@@ -18,7 +18,7 @@ import java.util.*;
 /**
  * This class is responsible for handling requests related to subscriptions.
  */
-@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://onlyfin.se"}, allowCredentials = "true")
+@CrossOrigin(origins = {"https://onlyfrontend-production.up.railway.app", "https://beta.onlyfin.se"}, allowCredentials = "true")
 @RestController
 public class SubscriptionController {
     private final SubscriptionRepository subscriptionRepository;
