@@ -57,9 +57,8 @@ public class FeedController {
      * @return a list of feed cards
      */
     @GetMapping("/all-the-things")
-    public ResponseEntity<List<FeedCardDTO>> fetchFeedAll(Principal principal, @Nullable TimeZone timeZone) {
+    public ResponseEntity<List<FeedCardDTO>> fetchFeedAll(Principal principal, @Nullable ZoneId zoneId) {
         User fetchingUser = userService.getUserOrException(principal.getName());
-        TimeZone timeZoneToUse = Objects.requireNonNullElse(timeZone, TimeZone.getDefault());
 
         List<Subscription> subscriptions = subscriptionRepository.findBySubscriber(fetchingUser);
         if (subscriptions.isEmpty()) {
@@ -74,7 +73,7 @@ public class FeedController {
             analystUsernameToIdMap.put(currentAnalyst.getUsername(), currentAnalyst.getId());
         }
 
-        List<FeedCardDTO> feedCardDTOS = createFeedCardDTOList(analystUsernameToIdMap, feedCards, timeZoneToUse.toZoneId());
+        List<FeedCardDTO> feedCardDTOS = createFeedCardDTOList(analystUsernameToIdMap, feedCards, zoneId);
         if (feedCards.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
