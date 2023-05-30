@@ -188,9 +188,9 @@ public class FeedController {
                         new StockDTO(feedCard.getStockName(), -1),
                         new CategoryDTO(feedCard.getCategoryName(), feedCard.getCategoryId()),
                         feedCard.getContent(),
-                        LocalDateTime.ofInstant(feedCard.getPostDate(), Objects.requireNonNullElse(zoneId, ZoneId.systemDefault()))
+                        LocalDateTime.ofInstant(feedCard.getPostDate(), Objects.requireNonNullElse(zoneId, ZoneId.of("Europe/Stockholm")))
                                 .format(DateTimeFormatter.ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH)),
-                        LocalDateTime.ofInstant(feedCard.getUpdatedDate(), Objects.requireNonNullElse(zoneId, ZoneId.systemDefault()))
+                        LocalDateTime.ofInstant(feedCard.getUpdatedDate(), Objects.requireNonNullElse(zoneId, ZoneId.of("Europe/Stockholm")))
                                 .format(DateTimeFormatter.ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH))))
                 .sorted(Comparator.comparing(FeedCardDTO::postDate).reversed())
                 .collect(Collectors.toList());
@@ -211,9 +211,9 @@ public class FeedController {
                         new StockDTO(feedCard.getStockName(), -1),
                         new CategoryDTO(feedCard.getCategoryName(), feedCard.getCategoryId()),
                         feedCard.getContent(),
-                        LocalDateTime.ofInstant(feedCard.getPostDate(), Objects.requireNonNullElse(zoneId, ZoneId.systemDefault()))
+                        LocalDateTime.ofInstant(feedCard.getPostDate(), Objects.requireNonNullElse(zoneId, ZoneId.of("Europe/Stockholm")))
                                 .format(DateTimeFormatter.ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH)),
-                        LocalDateTime.ofInstant(feedCard.getUpdatedDate(), Objects.requireNonNullElse(zoneId, ZoneId.systemDefault()))
+                        LocalDateTime.ofInstant(feedCard.getUpdatedDate(), Objects.requireNonNullElse(zoneId, ZoneId.of("Europe/Stockholm")))
                                 .format(DateTimeFormatter.ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH))))
                 .sorted(Comparator.comparing(FeedCardDTO::postDate).reversed())
                 .collect(Collectors.toList());
