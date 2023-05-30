@@ -1,11 +1,13 @@
 package se.onlyfin.onlyfinbackend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.RequestContextUtils;
 import se.onlyfin.onlyfinbackend.DTO.CategoryDTO;
 import se.onlyfin.onlyfinbackend.DTO.FeedCardDTO;
 import se.onlyfin.onlyfinbackend.DTO.ProfileDTO;
@@ -59,6 +61,7 @@ public class FeedController {
     @GetMapping("/all-the-things")
     public ResponseEntity<List<FeedCardDTO>> fetchFeedAll(Principal principal, @Nullable ZoneId zoneId) {
         User fetchingUser = userService.getUserOrException(principal.getName());
+        System.out.println(zoneId);
 
         List<Subscription> subscriptions = subscriptionRepository.findBySubscriber(fetchingUser);
         if (subscriptions.isEmpty()) {
