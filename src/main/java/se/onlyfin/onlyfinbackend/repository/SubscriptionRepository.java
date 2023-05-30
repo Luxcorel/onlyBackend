@@ -67,14 +67,17 @@ public interface SubscriptionRepository extends CrudRepository<Subscription, Int
     void deleteAllBySubscribedTo(User targetUser);
 
     /**
-     * Finds the 7 most subscribed-to users
+     * Finds the 7 most subscribed-to analysts
      *
-     * @return the 7 most subscribed-to users
+     * @return the 7 most subscribed-to analysts
      */
     @Query("SELECT subscription.subscriber.username " +
             "FROM Subscription subscription " +
+            "JOIN subscription.subscriber user " +
+            "WHERE user.isAnalyst = true " +
             "GROUP BY subscription.subscriber.username " +
-            "ORDER BY COUNT(subscription.subscriber) DESC")
-    List<String> find7MostSubscribedUsernames();
+            "ORDER BY COUNT(subscription.subscriber) DESC " +
+            "LIMIT 7")
+    List<String> findTop7SubscribedAnalystUsernames();
 
 }

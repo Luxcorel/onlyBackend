@@ -54,7 +54,8 @@ public class SecurityConfig {
                                 "/search-all-analysts-include-sub-info",
                                 "/reviews/fetch-all",
                                 "/fetch-about-me",
-                                "/fetch-about-me-with-sub-info"
+                                "/fetch-about-me-with-sub-info",
+                                "/feed/target-analyst/"
                         )
                         .permitAll()
                         .requestMatchers(

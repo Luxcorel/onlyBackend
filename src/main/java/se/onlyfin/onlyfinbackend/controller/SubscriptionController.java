@@ -280,7 +280,7 @@ public class SubscriptionController {
      * @return the usernames of the top 7 most subscribed-to analysts
      */
     public List<String> getMostSubscribedUsernames() {
-        return subscriptionRepository.find7MostSubscribedUsernames();
+        return subscriptionRepository.findTop7SubscribedAnalystUsernames();
     }
 
 }

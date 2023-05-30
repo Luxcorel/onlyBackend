@@ -1,5 +1,7 @@
 package se.onlyfin.onlyfinbackend.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import se.onlyfin.onlyfinbackend.model.FeedCard;
 
@@ -33,6 +35,13 @@ public interface FeedCardRepository extends JpaRepository<FeedCard, Integer> {
      * @return A list of feed cards for the given analyst ordered by descending post-date
      */
     List<FeedCard> findByAnalystUsernameOrderByPostDateDesc(String username);
+
+    /**
+     * @param analystUsername The name of the analyst
+     * @param pageable        The page to return
+     * @return A page of feed cards for the given analyst ordered by descending post-date
+     */
+    Page<FeedCard> findByAnalystUsernameOrderByPostDateDesc(String analystUsername, Pageable pageable);
 
     /**
      * Finds the latest feed card for a target analyst.

@@ -40,6 +40,11 @@ public class TestSetupController {
     private static final String TEST_SUGGESTED_EMAIL = "TEST_SUGGESTED@example.org";
     private final UserDTO TEST_SUGGESTED_DTO = new UserDTO(TEST_SUGGESTED_EMAIL, TEST_SUGGESTED_USERNAME, TEST_SUGGESTED_PASSWORD);
 
+    private static final String TEST_TAKEN_USERNAME = "TEST_TAKEN";
+    private static final String TEST_TAKEN_PASSWORD = "TEST_TAKEN";
+    private static final String TEST_TAKEN_EMAIL = "TEST_TAKEN@example.org";
+    private final UserDTO TEST_TAKEN_DTO = new UserDTO(TEST_TAKEN_EMAIL, TEST_TAKEN_USERNAME, TEST_TAKEN_PASSWORD);
+
     private final int TEST_STOCK_REF_ID = 0;
 
     private final UserService userService;
@@ -95,6 +100,17 @@ public class TestSetupController {
         User targetUser = userService.getUserOrNull("TEST_REG");
         if (targetUser != null) {
             userService.deleteUser(targetUser);
+        }
+    }
+
+    /**
+     * Sets up the test Registration.1.1
+     */
+    @GetMapping("/registration11")
+    public void setUpRegistration11() {
+        User targetUser = userService.getUserOrNull("TEST_TAKEN");
+        if (targetUser == null) {
+            userService.registerUser(TEST_TAKEN_DTO);
         }
     }
 

@@ -2,6 +2,7 @@ package se.onlyfin.onlyfinbackend.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.NonNull;
+import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.onlyfin.onlyfinbackend.DTO.CategoryDTO;
@@ -139,6 +140,35 @@ public class FeedController {
         List<FeedCardDTO> feedCardDTOs = createFeedCardDTOList(analystUsernameToId, feedCards);
 
         return ResponseEntity.ok().body(feedCardDTOs);
+    }
+
+    /**
+     * This method fetches feed cards for a specified user using pages.
+     * A page contains a selected number of feed cards, by default 10.
+     * The next page can be returned by increasing the request parameter "page".
+     *
+     * @param page the page number
+     * @param size number of feed cards to fetch per page
+     * @return a page with feed cards
+     */
+    @GetMapping("/target-analyst")
+    public ResponseEntity<Page<FeedCardDTO>> fetchForSpecificAnalyst(@RequestParam String targetUsername,
+                                                                     @RequestParam(defaultValue = "0") Integer page,
+                                                                     @RequestParam(defaultValue = "10") Integer size) {
+        User targetAnalyst = userService.getUserOrNull(targetUsername);
+        if (targetAnalyst == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("postDate").descending());
+        Page<FeedCard> feedCardPage = feedCardRepository.findByAnalystUsernameOrderByPostDateDesc(targetAnalyst.getUsername(), pageable);
+
+        List<FeedCardDTO> feedCards = createFeedCardDTOList(targetAnalyst, feedCardPage.getContent());
+        if (feedCards.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok().body(new PageImpl<>(feedCards, pageable, feedCardPage.getTotalElements()));
     }
 
     /**
@@ -283,6 +313,7 @@ public class FeedController {
      * @param currentAnalystProfileDTO      profile of current analyst
      * @param stocksCoveredByCurrentAnalyst list of stocks covered by current analyst
      */
+    @Deprecated
     private void pushAnalystContentToList(List<FeedCardDTO> feedCardDTOS, ProfileDTO currentAnalystProfileDTO, List<Stock> stocksCoveredByCurrentAnalyst) {
         //go through stocks that currentAnalystUser covers
         for (Stock currentStockThatCurrentAnalystCovers : stocksCoveredByCurrentAnalyst) {
@@ -340,6 +371,7 @@ public class FeedController {
      * @param subscriptionList list of subscriptions
      * @return a map of dashboards connected to analysts
      */
+    @Deprecated
     private HashMap<User, Dashboard> createDashboardOwnershipMap(List<Subscription> subscriptionList) {
         HashMap<User, Dashboard> dashboardOwnershipMap = new HashMap<>();
         for (Subscription currentSubscription : subscriptionList) {
@@ -363,6 +395,21 @@ public class FeedController {
         return feedCards.stream()
                 .map(feedCard -> new FeedCardDTO(
                         new ProfileDTO(feedCard.getAnalystUsername(), analystUsernameToIdMap.get(feedCard.getAnalystUsername())),
+                        new StockDTO(feedCard.getStockName(), -1),
+                        new CategoryDTO(feedCard.getCategoryName(), feedCard.getCategoryId()),
+                        feedCard.getContent(),
+                        LocalDateTime.ofInstant(feedCard.getPostDate(), ZoneId.systemDefault())
+                                .format(DateTimeFormatter.ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH)),
+                        LocalDateTime.ofInstant(feedCard.getUpdatedDate(), ZoneId.systemDefault())
+                                .format(DateTimeFormatter.ofPattern("dd MMMM HH:mm yyyy", Locale.ENGLISH))))
+                .sorted(Comparator.comparing(FeedCardDTO::postDate).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private static List<FeedCardDTO> createFeedCardDTOList(User targetUser, List<FeedCard> feedCards) {
+        return feedCards.stream()
+                .map(feedCard -> new FeedCardDTO(
+                        new ProfileDTO(feedCard.getAnalystUsername(), targetUser.getId()),
                         new StockDTO(feedCard.getStockName(), -1),
                         new CategoryDTO(feedCard.getCategoryName(), feedCard.getCategoryId()),
                         feedCard.getContent(),
