@@ -73,7 +73,7 @@ public class FeedController {
             analystUsernameToIdMap.put(currentAnalyst.getUsername(), currentAnalyst.getId());
         }
 
-        List<FeedCardDTO> feedCardDTOS = createFeedCardDTOList(analystUsernameToIdMap, feedCards, zoneId);
+        List<FeedCardDTO> feedCardDTOS = createFeedCardDTOList(analystUsernameToIdMap, feedCards, null);
         if (feedCards.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -108,7 +108,7 @@ public class FeedController {
             analystUsernameToId.put(currentAnalyst.getUsername(), currentAnalyst.getId());
         }
 
-        List<FeedCardDTO> feedCardDTOs = createFeedCardDTOList(analystUsernameToId, feedCards, zoneId);
+        List<FeedCardDTO> feedCardDTOs = createFeedCardDTOList(analystUsernameToId, feedCards, null);
 
         return ResponseEntity.ok().body(feedCardDTOs);
     }
@@ -138,7 +138,7 @@ public class FeedController {
             analystUsernameToId.put(currentAnalyst.getUsername(), currentAnalyst.getId());
         }
 
-        List<FeedCardDTO> feedCardDTOs = createFeedCardDTOList(analystUsernameToId, feedCards, zoneId);
+        List<FeedCardDTO> feedCardDTOs = createFeedCardDTOList(analystUsernameToId, feedCards, null);
 
         return ResponseEntity.ok().body(feedCardDTOs);
     }
@@ -165,7 +165,7 @@ public class FeedController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("postDate").descending());
         Page<FeedCard> feedCardPage = feedCardRepository.findByAnalystUsernameOrderByPostDateDesc(targetAnalyst.getUsername(), pageable);
 
-        List<FeedCardDTO> feedCards = createFeedCardDTOList(targetAnalyst, feedCardPage.getContent(), zoneId);
+        List<FeedCardDTO> feedCards = createFeedCardDTOList(targetAnalyst, feedCardPage.getContent(), null);
         if (feedCards.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
