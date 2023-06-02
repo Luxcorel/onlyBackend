@@ -78,6 +78,8 @@ public class FeedController {
             return ResponseEntity.noContent().build();
         }
 
+        feedCardDTOS.sort(Comparator.comparing(FeedCardDTO::postDate).reversed());
+
         return ResponseEntity.ok().body(feedCardDTOS);
     }
 
